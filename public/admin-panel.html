@@ -182,6 +182,32 @@
 				font-size: 0.9em;
 			}
 
+			.progress-container {
+				margin: 15px 0;
+				background: rgba(0, 0, 0, 0.3);
+				height: 10px;
+				border-radius: 5px;
+				overflow: hidden;
+			}
+
+			.progress-bar {
+				height: 100%;
+				width: 0%;
+				background: linear-gradient(90deg, #00c6ff, #0072ff);
+				transition: width 1s linear;
+			}
+
+			.time-info {
+				display: flex;
+				justify-content: space-between;
+				font-size: 0.9em;
+				margin-top: 5px;
+			}
+
+			.time-info span {
+				color: #f8ff00;
+			}
+
 			.client-count {
 				font-weight: bold;
 				color: #4287f5;
@@ -257,6 +283,16 @@
 			<div class="server-info">
 				<p>Now Playing: <span id="nowPlaying">None</span></p>
 				<p>Playback Status: <span id="playbackStatus">Stopped</span></p>
+
+				<div class="progress-container">
+					<div class="progress-bar" id="progressBar"></div>
+				</div>
+				<div class="time-info">
+					<div>Current: <span id="currentTime">00:00</span></div>
+					<div>Duration: <span id="totalTime">00:00</span></div>
+					<div>Remaining: <span id="remainingTime">00:00</span></div>
+				</div>
+
 				<p>
 					Connected Clients:
 					<span id="clientCount" class="client-count">0</span> (<span
@@ -285,6 +321,13 @@
 			let currentTrackId = null
 			let trackList = []
 			let isPlaying = false
+			let currentPosition = 0
+			let trackDuration = 0
+			let progressInterval = null
+			let playbackStartTime = null
+			let playbackOffset = 0
+			let lastServerSync = 0
+			let debugLog = []
 
 			// DOM Elements
 			const statusDot = document.getElementById('statusDot')
@@ -298,6 +341,10 @@
 			const clientCountElement = document.getElementById('clientCount')
 			const refreshBtn = document.getElementById('refreshBtn')
 			const notification = document.getElementById('notification')
+			const progressBar = document.getElementById('progressBar')
+			const currentTimeElement = document.getElementById('currentTime')
+			const totalTimeElement = document.getElementById('totalTime')
+			const remainingTimeElement = document.getElementById('remainingTime')
 
 			// Initialize WebSocket connection
 			function connectWebSocket() {
@@ -364,6 +411,16 @@
 
 			// Handle server messages
 			function handleMessage(data) {
+				console.log('Received message:', data)
+
+				// Log for debugging
+				debugLog.unshift({
+					time: new Date().toISOString(),
+					type: data.type,
+					data: JSON.stringify(data),
+				})
+				if (debugLog.length > 10) debugLog.pop()
+
 				switch (data.type) {
 					case 'tracks':
 						// Update track list
@@ -399,6 +456,11 @@
 						}
 						break
 
+					case 'progress':
+						// Update playback progress
+						updatePlaybackProgress(data)
+						break
+
 					case 'error':
 						showNotification(`Error: ${data.message}`)
 						break
@@ -414,23 +476,103 @@
 						if (data.trackId !== undefined) {
 							currentTrackId = data.trackId
 							isPlaying = data.isPlaying
-							updatePlaybackUI(data)
+
+							// Update track info in UI
+							updateTrackInfo(data.trackId)
+
+							// If there's position data, update progress
+							if (data.position !== undefined && data.duration !== undefined) {
+								updatePlaybackProgress({
+									position: data.position,
+									duration: data.duration,
+								})
+							}
+
+							// Update playback status
+							playbackStatusElement.textContent = isPlaying
+								? 'Playing'
+								: data.trackId
+								? 'Paused'
+								: 'Stopped'
+
+							// Handle playback tracking
+							if (isPlaying) {
+								startProgressTracking()
+							} else {
+								stopProgressTracking()
+							}
 						}
 						break
 
 					case 'sync':
 						// Handle sync updates
 						if (data.trackId !== undefined) {
+							const trackChanged = currentTrackId !== data.trackId
 							currentTrackId = data.trackId
+							const playStateChanged = isPlaying !== data.isPlaying
 							isPlaying = data.isPlaying
-							updatePlaybackUI(data)
+
+							// Update track info if changed
+							if (trackChanged) {
+								updateTrackInfo(data.trackId)
+
+								// Reset progress if track changed
+								if (data.duration) {
+									trackDuration = data.duration
+									currentPosition = data.position || 0
+									playbackOffset = currentPosition
+									if (isPlaying) {
+										playbackStartTime = Date.now() / 1000
+									}
+								}
+							}
+
+							// Update playback status
+							playbackStatusElement.textContent = isPlaying
+								? 'Playing'
+								: data.trackId
+								? 'Paused'
+								: 'Stopped'
+
+							// Handle playback tracking state changes
+							if (playStateChanged) {
+								if (isPlaying) {
+									playbackOffset = currentPosition
+									playbackStartTime = Date.now() / 1000
+									startProgressTracking()
+								} else {
+									stopProgressTracking()
+								}
+							}
+
+							// If position provided, sync it
+							if (data.position !== undefined) {
+								playbackOffset = data.position
+								playbackStartTime = Date.now() / 1000
+								currentPosition = data.position
+							}
 						}
 						break
 
 					case 'trackChange':
 						// Handle track change notifications
+						const prevTrackId = currentTrackId
 						currentTrackId = data.trackId
-						updatePlaybackUI(data)
+
+						// Update track info in UI
+						updateTrackInfo(data.trackId)
+
+						// Reset progress if we have duration info
+						if (data.duration) {
+							trackDuration = data.duration
+							currentPosition = 0
+							playbackOffset = 0
+
+							if (isPlaying) {
+								playbackStartTime = Date.now() / 1000
+								startProgressTracking()
+							}
+						}
 						break
 
 					default:
@@ -438,77 +580,183 @@
 				}
 			}
 
-			// Update UI based on playback data
-			function updatePlaybackUI(data) {
-				// Update now playing info
-				if (data.trackId !== null) {
-					// Find track name
-					const trackName = data.trackName || findTrackName(data.trackId)
-					nowPlayingElement.textContent =
-						trackName || `Track ID: ${data.trackId}`
+			// Update track info in the UI
+			function updateTrackInfo(trackId) {
+				if (trackId) {
+					const track = trackList.find((t) => t.id === trackId)
+					if (track) {
+						nowPlayingElement.textContent = track.name
+						// If the track has duration info and we don't, use it
+						if (track.duration && trackDuration === 0) {
+							trackDuration = track.duration
+							totalTimeElement.textContent = formatTime(trackDuration)
+						}
+					} else {
+						nowPlayingElement.textContent = `Track ID: ${trackId}`
+					}
 				} else {
 					nowPlayingElement.textContent = 'None'
-				}
-
-				// Update playback status
-				playbackStatusElement.textContent = data.isPlaying
-					? 'Playing'
-					: data.trackId !== null
-					? 'Paused'
-					: 'Stopped'
-
-				// Update client counts if available
-				if (data.clients) {
-					document.getElementById('clientCount').textContent =
-						data.clients.total
-					document.getElementById('listenerCount').textContent =
-						data.clients.listeners
-					document.getElementById('adminCount').textContent =
-						data.clients.admins
-
-					// Show unknown clients if any
-					const unknownInfo = document.getElementById('unknownInfo')
-					if (data.clients.unknown && data.clients.unknown > 0) {
-						unknownInfo.textContent = `, ${data.clients.unknown} unknown`
-					} else {
-						unknownInfo.textContent = ''
-					}
+					// Reset progress when no track
+					currentPosition = 0
+					trackDuration = 0
+					updateProgressDisplay()
 				}
 
 				// Update track list selection
 				renderTrackList()
 			}
 
-			// Find track name by ID
-			function findTrackName(trackId) {
-				const track = trackList.find((t) => t.id === trackId)
-				return track ? track.name : null
-			}
+			// Update playback state UI
+			function updatePlaybackState(data) {
+				const trackChanged = currentTrackId !== data.trackId
+				const playStateChanged = isPlaying !== data.isPlaying
 
-			// Request the list of available tracks
-			function requestTrackList() {
-				if (socket && socket.readyState === WebSocket.OPEN) {
-					socket.send(JSON.stringify({ type: 'getTrackList' }))
+				// Update state variables
+				isPlaying = data.isPlaying
+				currentTrackId = data.trackId
 
-					// As a fallback, also try to get tracks via HTTP API
-					fetch('/api/tracks')
-						.then((response) => response.json())
-						.then((data) => {
-							if (data && data.tracks && data.tracks.length > 0) {
-								trackList = data.tracks
-								renderTrackList()
-							}
-						})
-						.catch((err) => {
-							console.error('Error fetching tracks via API:', err)
-						})
+				// Update UI text
+				playbackStatusElement.textContent = isPlaying
+					? 'Playing'
+					: data.trackId
+					? 'Paused'
+					: 'Stopped'
+
+				// Update track info if track changed
+				if (trackChanged) {
+					updateTrackInfo(data.trackId)
+				}
+
+				// Update progress information if available
+				if (data.position !== undefined && data.duration !== undefined) {
+					trackDuration = data.duration
+
+					// Only update position from server if track changed or not playing
+					// (to avoid jumps during active playback)
+					if (
+						trackChanged ||
+						!isPlaying ||
+						Math.abs(data.position - currentPosition) > 5
+					) {
+						currentPosition = data.position
+						playbackOffset = currentPosition
+						playbackStartTime = Date.now() / 1000
+					}
+
+					// Update display
+					updateProgressDisplay()
+					lastServerSync = Date.now() / 1000
+				}
+
+				// Handle playback tracking state changes
+				if (playStateChanged) {
+					if (isPlaying) {
+						playbackOffset = currentPosition
+						playbackStartTime = Date.now() / 1000
+						startProgressTracking()
+					} else {
+						stopProgressTracking()
+					}
 				}
 			}
 
-			// Request current playback state
-			function requestPlaybackState() {
-				if (socket && socket.readyState === WebSocket.OPEN) {
-					socket.send(JSON.stringify({ type: 'getPlaybackState' }))
+			// Update playback progress based on server data
+			function updatePlaybackProgress(data) {
+				if (data.position !== undefined && data.duration !== undefined) {
+					// Update track duration if provided
+					if (data.duration > 0) {
+						trackDuration = data.duration
+					}
+
+					// Only update position if it's significantly different from our calculated one
+					// or if we're not actively playing (to avoid jumps)
+					if (!isPlaying || Math.abs(data.position - currentPosition) > 3) {
+						currentPosition = data.position
+						playbackOffset = currentPosition
+						playbackStartTime = Date.now() / 1000
+					}
+
+					// Update the display
+					updateProgressDisplay()
+					lastServerSync = Date.now() / 1000
+				}
+			}
+
+			// Update the progress display elements
+			function updateProgressDisplay() {
+				// Update progress bar and time displays
+				if (trackDuration > 0) {
+					const progressPercent = Math.min(
+						100,
+						(currentPosition / trackDuration) * 100
+					)
+					progressBar.style.width = `${progressPercent}%`
+					currentTimeElement.textContent = formatTime(currentPosition)
+					totalTimeElement.textContent = formatTime(trackDuration)
+					remainingTimeElement.textContent = formatTime(
+						Math.max(0, trackDuration - currentPosition)
+					)
+				} else {
+					// No duration info
+					progressBar.style.width = '0%'
+					currentTimeElement.textContent = formatTime(currentPosition)
+					totalTimeElement.textContent = '00:00'
+					remainingTimeElement.textContent = '00:00'
+				}
+			}
+
+			// Format seconds to MM:SS
+			function formatTime(seconds) {
+				if (isNaN(seconds) || seconds < 0) return '00:00'
+				const mins = Math.floor(seconds / 60)
+				const secs = Math.floor(seconds % 60)
+				return `${mins.toString().padStart(2, '0')}:${secs
+					.toString()
+					.padStart(2, '0')}`
+			}
+
+			// Start accurate progress tracking
+			function startProgressTracking() {
+				// Clear any existing interval
+				stopProgressTracking()
+
+				// Set the start time if not already set
+				if (!playbackStartTime) {
+					playbackStartTime = Date.now() / 1000
+				}
+
+				// Start the interval
+				progressInterval = setInterval(() => {
+					if (isPlaying && trackDuration > 0) {
+						// Calculate elapsed time since playback started
+						const now = Date.now() / 1000
+						const elapsed = now - playbackStartTime
+
+						// Calculate current position
+						currentPosition = playbackOffset + elapsed
+
+						// Check if we've reached the end
+						if (currentPosition >= trackDuration) {
+							currentPosition = trackDuration
+							updateProgressDisplay()
+
+							// The server should tell us about track completion,
+							// but as a backup, we'll request state after reaching the end
+							requestPlaybackState()
+							return
+						}
+
+						// Update the display
+						updateProgressDisplay()
+					}
+				}, 200) // Update 5 times per second for smoother progress
+			}
+
+			// Stop progress tracking
+			function stopProgressTracking() {
+				if (progressInterval) {
+					clearInterval(progressInterval)
+					progressInterval = null
 				}
 			}
 
@@ -530,11 +778,15 @@
 					}
 
 					const sizeMB = track.sizeMB || 'Unknown'
+					const duration = track.duration ? formatTime(track.duration) : ''
 
 					trackElement.innerHTML = `
 						<div>
 							<div class="track-name">${track.name}</div>
-							<div class="track-info">${sizeMB !== 'Unknown' ? `${sizeMB} MB` : ''}</div>
+							<div class="track-info">
+								${duration ? `Duration: ${duration}` : ''}
+								${sizeMB !== 'Unknown' ? `${sizeMB} MB` : ''}
+							</div>
 						</div>
 					`
 
@@ -586,32 +838,41 @@
 				}
 			}
 
-			// Update playback state UI
-			function updatePlaybackState(data) {
-				isPlaying = data.isPlaying
-				currentTrackId = data.trackId
+			// Show notification
+			function showNotification(message) {
+				notification.textContent = message
+				notification.classList.add('show')
 
-				// Update UI
-				playbackStatusElement.textContent = isPlaying
-					? 'Playing'
-					: data.trackId
-					? 'Paused'
-					: 'Stopped'
+				setTimeout(() => {
+					notification.classList.remove('show')
+				}, 3000)
+			}
 
-				// Find track name
-				if (data.trackId) {
-					const track = trackList.find((t) => t.id === data.trackId)
-					if (track) {
-						nowPlayingElement.textContent = track.name
-					} else {
-						nowPlayingElement.textContent = `Track ID: ${data.trackId}`
-					}
-				} else {
-					nowPlayingElement.textContent = 'None'
+			// Request the list of available tracks
+			function requestTrackList() {
+				if (socket && socket.readyState === WebSocket.OPEN) {
+					socket.send(JSON.stringify({ type: 'getTrackList' }))
+
+					// As a fallback, also try to get tracks via HTTP API
+					fetch('/api/tracks')
+						.then((response) => response.json())
+						.then((data) => {
+							if (data && data.tracks && data.tracks.length > 0) {
+								trackList = data.tracks
+								renderTrackList()
+							}
+						})
+						.catch((err) => {
+							console.error('Error fetching tracks via API:', err)
+						})
 				}
+			}
 
-				// Update track list selection
-				renderTrackList()
+			// Request current playback state
+			function requestPlaybackState() {
+				if (socket && socket.readyState === WebSocket.OPEN) {
+					socket.send(JSON.stringify({ type: 'getPlaybackState' }))
+				}
 			}
 
 			// Play the currently selected track
@@ -631,6 +892,13 @@
 						console.error('Error playing track via API:', err)
 						showNotification('Error playing track')
 					})
+
+					// Optimistically update UI
+					isPlaying = true
+					playbackStatusElement.textContent = 'Playing'
+					playbackOffset = currentPosition
+					playbackStartTime = Date.now() / 1000
+					startProgressTracking()
 				}
 			}
 
@@ -651,6 +919,11 @@
 						console.error('Error pausing track via API:', err)
 						showNotification('Error pausing track')
 					})
+
+					// Optimistically update UI
+					isPlaying = false
+					playbackStatusElement.textContent = 'Paused'
+					stopProgressTracking()
 				}
 			}
 
@@ -671,17 +944,15 @@
 						console.error('Error stopping track via API:', err)
 						showNotification('Error stopping track')
 					})
+
+					// Optimistically update UI
+					isPlaying = false
+					playbackStatusElement.textContent = 'Stopped'
+					currentPosition = 0
+					playbackOffset = 0
+					updateProgressDisplay()
+					stopProgressTracking()
 				}
-			}
-
-			// Show notification
-			function showNotification(message) {
-				notification.textContent = message
-				notification.classList.add('show')
-
-				setTimeout(() => {
-					notification.classList.remove('show')
-				}, 3000)
 			}
 
 			// Initialize the admin panel
@@ -698,7 +969,21 @@
 				// Request updates periodically
 				setInterval(() => {
 					if (socket && socket.readyState === WebSocket.OPEN) {
+						// Request playback state from server
 						requestPlaybackState()
+
+						// Also request progress information
+						socket.send(JSON.stringify({ type: 'getProgress' }))
+
+						// Check if we haven't had a sync in a while and our tracking might be off
+						const now = Date.now() / 1000
+						if (isPlaying && now - lastServerSync > 30) {
+							// Force a progress request if we haven't heard from the server in 30 seconds
+							console.log(
+								'Forcing progress request due to long time without sync'
+							)
+							requestPlaybackState()
+						}
 					}
 				}, 5000)
 			}
