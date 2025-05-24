@@ -127,15 +127,22 @@ function handleMessage(data, state, ui) {
 							data.trackDuration > 10000
 								? Math.round(data.trackDuration / 1000)
 								: data.trackDuration
+
+						console.log(`Set track duration to ${state.trackDuration} seconds`)
 					}
 
 					// Check for position info
 					if (data.currentPosition) {
+						// Convert to seconds if it's in milliseconds
 						state.currentPosition =
 							data.currentPosition > 10000
-								? Math.round(data.currentPosition / 1000) // Convert ms to seconds if needed
+								? Math.round(data.currentPosition / 1000)
 								: data.currentPosition
 						state.playbackOffset = state.currentPosition
+
+						console.log(
+							`Set current position to ${state.currentPosition} seconds`
+						)
 					}
 
 					// Update track info in UI
@@ -143,6 +150,11 @@ function handleMessage(data, state, ui) {
 
 					// Update playback status
 					ui.updatePlaybackStatus(state.isPlaying, state.currentTrackId)
+
+					// Update progress display
+					if (state.currentPosition !== undefined && state.trackDuration > 0) {
+						ui.updateProgressDisplay(state.currentPosition, state.trackDuration)
+					}
 
 					// Dispatch playback update event
 					window.dispatchEvent(
@@ -175,15 +187,24 @@ function handleMessage(data, state, ui) {
 							data.trackDuration > 10000
 								? Math.round(data.trackDuration / 1000)
 								: data.trackDuration
+
+						console.log(
+							`Sync: Set track duration to ${state.trackDuration} seconds`
+						)
 					}
 
 					// Check for position
 					if (data.currentPosition) {
+						// Convert to seconds if it's in milliseconds
 						state.currentPosition =
 							data.currentPosition > 10000
-								? Math.round(data.currentPosition / 1000) // Convert ms to seconds if needed
+								? Math.round(data.currentPosition / 1000)
 								: data.currentPosition
 						state.playbackOffset = state.currentPosition
+
+						console.log(
+							`Sync: Set current position to ${state.currentPosition} seconds`
+						)
 					}
 
 					// Update track info if changed
@@ -193,6 +214,11 @@ function handleMessage(data, state, ui) {
 
 					// Update playback status
 					ui.updatePlaybackStatus(state.isPlaying, state.currentTrackId)
+
+					// Update progress display
+					if (state.currentPosition !== undefined && state.trackDuration > 0) {
+						ui.updateProgressDisplay(state.currentPosition, state.trackDuration)
+					}
 
 					// Dispatch playback update event
 					window.dispatchEvent(
@@ -221,6 +247,13 @@ function handleMessage(data, state, ui) {
 					state.currentPosition = 0
 					state.playbackOffset = 0
 
+					console.log(
+						`Track change: Set duration to ${state.trackDuration} seconds`
+					)
+
+					// Update progress display with the new track info
+					ui.updateProgressDisplay(state.currentPosition, state.trackDuration)
+
 					window.dispatchEvent(
 						new CustomEvent('playback-update', {
 							detail: data,
@@ -247,19 +280,31 @@ function handleMessage(data, state, ui) {
 function updatePlaybackProgress(data, state, ui) {
 	console.log('Progress update:', data)
 
-	if (data.position !== undefined && data.duration !== undefined) {
+	// Convert position and duration from ms to seconds if needed
+	const position =
+		data.position !== undefined
+			? data.position > 10000
+				? Math.round(data.position / 1000)
+				: data.position
+			: undefined
+
+	const duration =
+		data.duration !== undefined
+			? data.duration > 10000
+				? Math.round(data.duration / 1000)
+				: data.duration
+			: undefined
+
+	if (position !== undefined && duration !== undefined) {
 		// Update track duration if provided
-		if (data.duration > 0) {
-			state.trackDuration = data.duration
+		if (duration > 0) {
+			state.trackDuration = duration
 		}
 
 		// Only update position if it's significantly different from our calculated one
 		// or if we're not actively playing (to avoid jumps)
-		if (
-			!state.isPlaying ||
-			Math.abs(data.position - state.currentPosition) > 3
-		) {
-			state.currentPosition = data.position
+		if (!state.isPlaying || Math.abs(position - state.currentPosition) > 3) {
+			state.currentPosition = position
 			state.playbackOffset = state.currentPosition
 			state.playbackStartTime = Date.now() / 1000
 		}
@@ -269,13 +314,10 @@ function updatePlaybackProgress(data, state, ui) {
 		state.lastServerSync = Date.now() / 1000
 	}
 	// If we just have position but no duration
-	else if (data.position !== undefined && state.trackDuration > 0) {
+	else if (position !== undefined && state.trackDuration > 0) {
 		// Only update position if needed
-		if (
-			!state.isPlaying ||
-			Math.abs(data.position - state.currentPosition) > 3
-		) {
-			state.currentPosition = data.position
+		if (!state.isPlaying || Math.abs(position - state.currentPosition) > 3) {
+			state.currentPosition = position
 			state.playbackOffset = state.currentPosition
 			state.playbackStartTime = Date.now() / 1000
 		}

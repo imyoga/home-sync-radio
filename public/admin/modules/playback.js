@@ -52,16 +52,28 @@ export function updatePlaybackState(data, state, ui) {
 
 	// Update progress information if available
 	if (data.trackDuration !== undefined) {
-		state.trackDuration = data.trackDuration
+		// Convert ms to seconds if needed
+		state.trackDuration =
+			data.trackDuration > 10000
+				? Math.round(data.trackDuration / 1000)
+				: data.trackDuration
 	} else if (data.duration !== undefined) {
-		state.trackDuration = data.duration
+		// Convert ms to seconds if needed
+		state.trackDuration =
+			data.duration > 10000 ? Math.round(data.duration / 1000) : data.duration
 	}
 
 	if (data.currentPosition !== undefined) {
-		state.currentPosition = data.currentPosition / 1000 // Convert ms to seconds if needed
+		// Convert ms to seconds if needed
+		state.currentPosition =
+			data.currentPosition > 10000
+				? Math.round(data.currentPosition / 1000)
+				: data.currentPosition
 		state.playbackOffset = state.currentPosition
 	} else if (data.position !== undefined) {
-		state.currentPosition = data.position
+		// Convert ms to seconds if needed
+		state.currentPosition =
+			data.position > 10000 ? Math.round(data.position / 1000) : data.position
 		state.playbackOffset = state.currentPosition
 	}
 

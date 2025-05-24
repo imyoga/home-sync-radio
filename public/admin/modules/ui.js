@@ -101,6 +101,13 @@ export function updateTrackInfo(trackId, trackName, trackList) {
 	} else {
 		elements.nowPlayingElement.textContent = 'None'
 	}
+
+	// Always log what we're displaying for debugging
+	console.log(
+		`Updated track info: ${elements.nowPlayingElement.textContent} (ID: ${
+			trackId || 'none'
+		})`
+	)
 }
 
 /**
@@ -174,8 +181,15 @@ export function showNotification(message) {
  */
 export function formatTime(seconds) {
 	if (isNaN(seconds) || seconds < 0) return '00:00'
+
+	// Ensure seconds is a number and not a string
+	seconds = Number(seconds)
+
+	// Calculate minutes and seconds
 	const mins = Math.floor(seconds / 60)
 	const secs = Math.floor(seconds % 60)
+
+	// Format with padding
 	return `${mins.toString().padStart(2, '0')}:${secs
 		.toString()
 		.padStart(2, '0')}`
