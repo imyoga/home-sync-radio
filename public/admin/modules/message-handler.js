@@ -38,22 +38,31 @@ function handleMessage(data, state, ui) {
 		switch (data.type) {
 			case 'tracks':
 				// Update track list
-				state.trackList = data.tracks
+				console.log('Received tracks data:', data.tracks)
+				// Only update if we actually have tracks
+				if (data.tracks && data.tracks.length > 0) {
+					state.trackList = data.tracks
 
-				// For each track, estimate duration if needed
-				state.trackList.forEach((track) => {
-					if (!track.duration && track.sizeMB) {
-						// Rough estimate: 1MB ≈ 1 minute
-						track.duration = track.sizeMB * 60
-					}
-				})
-
-				// Dispatch event to trigger track list rendering
-				window.dispatchEvent(
-					new CustomEvent('tracks-loaded', {
-						detail: { tracks: state.trackList },
+					// For each track, estimate duration if needed
+					state.trackList.forEach((track) => {
+						if (!track.duration && track.sizeMB) {
+							// Rough estimate: 1MB ≈ 1 minute
+							track.duration = track.sizeMB * 60
+						}
+						console.log(
+							`Track ${track.id}: ${track.name}, Duration: ${track.duration}s, Size: ${track.sizeMB}MB`
+						)
 					})
-				)
+
+					// Dispatch event to trigger track list rendering
+					window.dispatchEvent(
+						new CustomEvent('tracks-loaded', {
+							detail: { tracks: state.trackList },
+						})
+					)
+				} else {
+					console.log('No tracks found in data or empty tracks array')
+				}
 
 				// Update client count if present
 				if (data.clients) {
@@ -113,12 +122,19 @@ function handleMessage(data, state, ui) {
 
 					// Check for duration info
 					if (data.trackDuration) {
-						state.trackDuration = data.trackDuration
+						// Convert to seconds if it's in milliseconds
+						state.trackDuration =
+							data.trackDuration > 10000
+								? Math.round(data.trackDuration / 1000)
+								: data.trackDuration
 					}
 
 					// Check for position info
 					if (data.currentPosition) {
-						state.currentPosition = data.currentPosition / 1000 // Convert ms to seconds if needed
+						state.currentPosition =
+							data.currentPosition > 10000
+								? Math.round(data.currentPosition / 1000) // Convert ms to seconds if needed
+								: data.currentPosition
 						state.playbackOffset = state.currentPosition
 					}
 
@@ -154,12 +170,19 @@ function handleMessage(data, state, ui) {
 
 					// Check for duration
 					if (data.trackDuration) {
-						state.trackDuration = data.trackDuration
+						// Convert to seconds if it's in milliseconds
+						state.trackDuration =
+							data.trackDuration > 10000
+								? Math.round(data.trackDuration / 1000)
+								: data.trackDuration
 					}
 
 					// Check for position
 					if (data.currentPosition) {
-						state.currentPosition = data.currentPosition / 1000 // Convert ms to seconds if needed
+						state.currentPosition =
+							data.currentPosition > 10000
+								? Math.round(data.currentPosition / 1000) // Convert ms to seconds if needed
+								: data.currentPosition
 						state.playbackOffset = state.currentPosition
 					}
 
@@ -190,7 +213,11 @@ function handleMessage(data, state, ui) {
 
 				// Check for track duration
 				if (data.trackDuration) {
-					state.trackDuration = data.trackDuration
+					// Convert to seconds if it's in milliseconds
+					state.trackDuration =
+						data.trackDuration > 10000
+							? Math.round(data.trackDuration / 1000)
+							: data.trackDuration
 					state.currentPosition = 0
 					state.playbackOffset = 0
 

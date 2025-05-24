@@ -124,7 +124,7 @@ function preloadCurrentTrack() {
 }
 
 // Initialize music files
-loadMusicFiles()
+// loadMusicFiles() - Removing this to prevent double loading of tracks, since we already call it at server startup
 
 // Radio starts in paused state - wait for admin panel command to playisPlaying = false
 
@@ -608,6 +608,16 @@ server.listen(PORT, async () => {
 
 	// Load music files asynchronously
 	await loadMusicFiles()
+
+	// Log the actual tracks found (debugging)
+	console.log(`🔍 TRACKS FOUND: ${musicFiles.length} files`)
+	musicFiles.forEach((track, i) => {
+		console.log(
+			`   Track ${i}: ${track.name}, ID: ${track.id}, Duration: ${Math.round(
+				track.estimatedDurationMs / 1000
+			)}s`
+		)
+	})
 
 	if (currentTrack) {
 		console.log(`🎧 Current Track: ${currentTrack.name}`)
