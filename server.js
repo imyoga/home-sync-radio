@@ -3,8 +3,13 @@ const http = require('http')
 const WebSocket = require('ws')
 const fs = require('fs')
 const path = require('path')
+const mp3Duration = require('mp3-duration')
+const util = require('util')
 const app = express()
 const PORT = 3002
+
+// Promisify mp3Duration for async/await usage
+const getMP3Duration = util.promisify(mp3Duration)
 
 // Create HTTP server
 const server = http.createServer(app)
@@ -29,28 +34,53 @@ let audioContext = null
 const musicDir = path.join(__dirname, 'music')
 
 // Load all music files from the music directory
-function loadMusicFiles() {
+async function loadMusicFiles() {
 	try {
 		const files = fs.readdirSync(musicDir)
-		musicFiles = files
-			.filter(
-				(file) =>
-					file.toLowerCase().endsWith('.mp3') ||
-					file.toLowerCase().endsWith('.ogg')
-			)
-			.map((file, index) => {
-				const filePath = path.join(musicDir, file)
-				const stat = fs.statSync(filePath)
-				return {
+		const validFiles = files.filter(
+			(file) =>
+				file.toLowerCase().endsWith('.mp3') ||
+				file.toLowerCase().endsWith('.ogg')
+		)
+
+		// Process each file to get metadata
+		musicFiles = []
+		for (const [index, file] of validFiles.entries()) {
+			const filePath = path.join(musicDir, file)
+			const stat = fs.statSync(filePath)
+
+			try {
+				// Get actual MP3 duration if it's an MP3 file
+				let durationMs = 0
+				if (file.toLowerCase().endsWith('.mp3')) {
+					const durationSeconds = await getMP3Duration(filePath)
+					durationMs = durationSeconds * 1000
+				} else {
+					// Fallback estimation for non-MP3 files
+					durationMs = (stat.size * 8) / (128000 / 1000)
+				}
+
+				musicFiles.push({
 					id: index,
 					filename: file,
 					name: file.replace(/\.[^/.]+$/, ''), // Remove extension for display
 					path: filePath,
 					size: stat.size,
-					// Estimate duration based on file size (approximate for MP3)
-					estimatedDurationMs: (stat.size * 8) / (128000 / 1000), // Assuming 128kbps
-				}
-			})
+					estimatedDurationMs: durationMs,
+				})
+			} catch (metadataError) {
+				console.error(`Error reading duration for ${file}:`, metadataError)
+				// Fallback to estimation if duration parsing fails
+				musicFiles.push({
+					id: index,
+					filename: file,
+					name: file.replace(/\.[^/.]+$/, ''),
+					path: filePath,
+					size: stat.size,
+					estimatedDurationMs: (stat.size * 8) / (128000 / 1000), // Fallback estimation
+				})
+			}
+		}
 
 		if (musicFiles.length > 0) {
 			currentTrack = musicFiles[0]
@@ -374,6 +404,7 @@ wss.on('connection', (ws, req) => {
 							id: track.id,
 							name: track.name,
 							sizeMB: Math.round((track.size / 1024 / 1024) * 10) / 10, // Size in MB with one decimal
+							duration: Math.round(track.estimatedDurationMs / 1000), // Duration in seconds
 						})),
 						clients: {
 							total: clients.length,
@@ -569,11 +600,14 @@ app.post('/api/control/:action', (req, res) => {
 })
 
 // Start the server
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
 	console.log(
 		`🎵 HomeSync Synchronized Radio Server running at http://localhost:${PORT}`
 	)
 	console.log(`🎛️  Admin Panel: http://localhost:${PORT}/admin`)
+
+	// Load music files asynchronously
+	await loadMusicFiles()
 
 	if (currentTrack) {
 		console.log(`🎧 Current Track: ${currentTrack.name}`)
