@@ -85,28 +85,55 @@ export function updatePlaybackStatus(isPlaying, trackId) {
  * @param {Array} trackList - List of available tracks
  */
 export function updateTrackInfo(trackId, trackName, trackList) {
+	// Add extensive debugging
+	console.log('updateTrackInfo called with:', {
+		trackId: trackId,
+		trackName: trackName,
+		hasTrackList: Array.isArray(trackList) && trackList.length > 0,
+	})
+
+	if (trackList && Array.isArray(trackList)) {
+		console.log(
+			'Available tracks:',
+			trackList.map((t) => `${t.id}: ${t.name}`).join(', ')
+		)
+	}
+
+	// Special case for undefined or null trackId with name
+	if (
+		(!trackId || trackId === 'undefined' || trackId === 'null') &&
+		trackName
+	) {
+		console.log('Track ID is missing but name is provided, using name directly')
+		elements.nowPlayingElement.textContent = trackName
+		return
+	}
+
 	if (trackId) {
 		// If we have a direct track name provided, use it
 		if (trackName) {
+			console.log(`Using provided track name: ${trackName}`)
 			elements.nowPlayingElement.textContent = trackName
 		} else {
 			// Otherwise look it up in our track list
-			const track = trackList.find((t) => t.id === trackId)
+			console.log(`Looking up track ${trackId} in track list`)
+			const track = trackList?.find((t) => t.id === trackId)
 			if (track) {
+				console.log(`Found track: ${track.name}`)
 				elements.nowPlayingElement.textContent = track.name
 			} else {
+				console.log(`Track not found in list, using ID: ${trackId}`)
 				elements.nowPlayingElement.textContent = `Track ID: ${trackId}`
 			}
 		}
 	} else {
+		console.log('No track ID provided, setting to None')
 		elements.nowPlayingElement.textContent = 'None'
 	}
 
 	// Always log what we're displaying for debugging
 	console.log(
-		`Updated track info: ${elements.nowPlayingElement.textContent} (ID: ${
-			trackId || 'none'
-		})`
+		`Now Playing element now shows: "${elements.nowPlayingElement.textContent}"`
 	)
 }
 

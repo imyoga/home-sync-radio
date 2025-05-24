@@ -35,19 +35,39 @@ export function initPlayback(state, ui, ws) {
 export function updatePlaybackState(data, state, ui) {
 	console.log('Updating playback state:', data)
 
+	// Track state changes
 	const trackChanged = state.currentTrackId !== data.trackId
 	const playStateChanged = state.isPlaying !== data.isPlaying
 
+	// Record previous state for debugging
+	console.log('Previous state:', {
+		trackId: state.currentTrackId,
+		isPlaying: state.isPlaying,
+		position: state.currentPosition,
+		duration: state.trackDuration,
+	})
+
 	// Update state variables
-	state.isPlaying = data.isPlaying
-	state.currentTrackId = data.trackId
+	if (data.trackId !== undefined) {
+		state.currentTrackId = data.trackId
+	}
+
+	if (data.isPlaying !== undefined) {
+		state.isPlaying = data.isPlaying
+	}
 
 	// Update UI text
 	ui.updatePlaybackStatus(state.isPlaying, state.currentTrackId)
 
-	// Update track info if track changed
-	if (trackChanged) {
+	// Always update track info on state change to ensure display is correct
+	if (data.trackId !== undefined) {
 		ui.updateTrackInfo(data.trackId, data.trackName, state.trackList)
+	} else if (state.currentTrackId) {
+		// If no trackId in data but we have a currentTrackId, use that
+		// Try to find track info from our track list
+		const track = state.trackList.find((t) => t.id === state.currentTrackId)
+		const trackName = track ? track.name : `Track ID: ${state.currentTrackId}`
+		ui.updateTrackInfo(state.currentTrackId, trackName, state.trackList)
 	}
 
 	// Update progress information if available

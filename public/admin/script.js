@@ -53,7 +53,43 @@ function initAdminPanel() {
 				requestPlaybackState()
 			}
 		}
+
+		// Check if UI and state are out of sync and need correction
+		verifyUIState(ui, state)
 	}, 5000)
+
+	// Initial verify after a short delay to ensure everything is loaded
+	setTimeout(() => verifyUIState(ui, state), 3000)
+}
+
+/**
+ * Verify UI state matches application state and correct if needed
+ * @param {Object} ui - UI functions and elements
+ * @param {Object} state - Application state object
+ */
+function verifyUIState(ui, state) {
+	// Verify Now Playing display
+	const nowPlayingElement = ui.elements?.nowPlayingElement
+	if (
+		nowPlayingElement &&
+		nowPlayingElement.textContent === 'None' &&
+		state.currentTrackId
+	) {
+		console.log('Fixing inconsistent Now Playing display')
+
+		// Find track info
+		const track = state.trackList.find((t) => t.id === state.currentTrackId)
+		const trackName = track ? track.name : `Track ID: ${state.currentTrackId}`
+
+		// Update track info display
+		ui.updateTrackInfo(state.currentTrackId, trackName, state.trackList)
+		ui.updatePlaybackStatus(state.isPlaying, state.currentTrackId)
+
+		// Update progress if we have it
+		if (state.currentPosition !== undefined && state.trackDuration > 0) {
+			ui.updateProgressDisplay(state.currentPosition, state.trackDuration)
+		}
+	}
 }
 
 // Start the admin panel when DOM is loaded

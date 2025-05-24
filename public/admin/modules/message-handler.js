@@ -174,6 +174,7 @@ function handleMessage(data, state, ui) {
 				// Handle sync updates
 				console.log('Sync data received:', data)
 
+				// Ensure we always have trackId for now playing info
 				if (data.trackId !== undefined) {
 					const trackChanged = state.currentTrackId !== data.trackId
 					state.currentTrackId = data.trackId
@@ -207,10 +208,8 @@ function handleMessage(data, state, ui) {
 						)
 					}
 
-					// Update track info if changed
-					if (trackChanged) {
-						ui.updateTrackInfo(data.trackId, data.trackName, state.trackList)
-					}
+					// Always update track info on sync to ensure display is correct
+					ui.updateTrackInfo(data.trackId, data.trackName, state.trackList)
 
 					// Update playback status
 					ui.updatePlaybackStatus(state.isPlaying, state.currentTrackId)
@@ -226,6 +225,29 @@ function handleMessage(data, state, ui) {
 							detail: data,
 						})
 					)
+				} else if (state.currentTrackId) {
+					// If sync data doesn't have trackId but we have one in state,
+					// update display with our state information
+					console.log(
+						'Sync missing trackId, using current state trackId:',
+						state.currentTrackId
+					)
+
+					// Try to find track info from our track list
+					const track = state.trackList.find(
+						(t) => t.id === state.currentTrackId
+					)
+					const trackName = track
+						? track.name
+						: `Track ID: ${state.currentTrackId}`
+
+					// Update with what we know
+					ui.updateTrackInfo(state.currentTrackId, trackName, state.trackList)
+					ui.updatePlaybackStatus(state.isPlaying, state.currentTrackId)
+
+					if (state.currentPosition !== undefined && state.trackDuration > 0) {
+						ui.updateProgressDisplay(state.currentPosition, state.trackDuration)
+					}
 				}
 				break
 

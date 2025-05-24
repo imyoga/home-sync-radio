@@ -44,6 +44,22 @@ export function initWebSocket(ui, state) {
 		try {
 			console.log('Raw message received:', event.data)
 			const data = JSON.parse(event.data)
+
+			// Special logging for playback state and sync messages
+			if (
+				data.type === 'playbackState' ||
+				data.type === 'sync' ||
+				data.type === 'initial'
+			) {
+				console.log(`${data.type} message details:`, {
+					trackId: data.trackId,
+					trackName: data.trackName,
+					isPlaying: data.isPlaying,
+					position: data.currentPosition || data.position,
+					duration: data.trackDuration || data.duration,
+				})
+			}
+
 			// Dispatch to message handler (imported in main.js)
 			window.dispatchEvent(new CustomEvent('ws-message', { detail: data }))
 		} catch (e) {
