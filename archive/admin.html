@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HomeSync Radio - Admin Panel</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        color: #fff;
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .admin-container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .header h1 {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        color: #fff;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      }
+
+      .header p {
+        opacity: 0.8;
+        font-size: 1.1em;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 20px;
+      }
+
+      @media (max-width: 768px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .panel {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 25px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+
+      .panel h2 {
+        margin-bottom: 20px;
+        font-size: 1.5em;
+        color: #fff;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+        padding-bottom: 10px;
+      }
+
+      .current-track {
+        grid-column: 1 / -1;
+        text-align: center;
+      }
+
+      .track-info {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+
+      .track-title {
+        font-size: 1.8em;
+        margin-bottom: 10px;
+        color: #4ade80;
+      }
+
+      .track-meta {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 15px;
+        opacity: 0.8;
+      }
+
+      .progress-container {
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 25px;
+        height: 10px;
+        overflow: hidden;
+        margin-bottom: 15px;
+      }
+
+      .progress-bar {
+        background: linear-gradient(90deg, #4ade80, #22c55e);
+        height: 100%;
+        transition: width 0.5s ease;
+        border-radius: 25px;
+      }
+
+      .time-display {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.9em;
+        opacity: 0.7;
+      }
+
+      .controls {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+      }
+
+      .btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: #fff;
+        padding: 12px 20px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 1em;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        min-width: 100px;
+      }
+
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      }
+
+      .btn:active {
+        transform: translateY(0);
+      }
+
+      .btn.primary {
+        background: linear-gradient(45deg, #4ade80, #22c55e);
+      }
+
+      .btn.danger {
+        background: linear-gradient(45deg, #ef4444, #dc2626);
+      }
+
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .playlist {
+        max-height: 400px;
+        overflow-y: auto;
+      }
+
+      .playlist::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .playlist::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+      }
+
+      .playlist::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 4px;
+      }
+
+      .track-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+        margin-bottom: 10px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 1px solid transparent;
+      }
+
+      .track-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateX(5px);
+      }
+
+      .track-item.current {
+        background: rgba(74, 222, 128, 0.2);
+        border-color: #4ade80;
+        transform: translateX(5px);
+      }
+
+      .track-item.current::before {
+        content: "🎵";
+        margin-right: 10px;
+      }
+
+      .track-info-item {
+        flex: 1;
+      }
+
+      .track-name {
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+
+      .track-duration {
+        font-size: 0.9em;
+        opacity: 0.7;
+      }
+
+      .status-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 10px;
+        background: #ef4444;
+        animation: pulse 2s infinite;
+      }
+
+      .status-indicator.playing {
+        background: #4ade80;
+      }
+
+      .status-indicator.paused {
+        background: #fbbf24;
+        animation: none;
+      }
+
+      @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+      }
+
+      .status-text {
+        font-weight: bold;
+      }
+
+      .error {
+        background: rgba(239, 68, 68, 0.2);
+        border: 1px solid rgba(239, 68, 68, 0.5);
+        color: #fca5a5;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        display: none;
+      }
+
+      .listeners-count {
+        text-align: center;
+        margin-top: 15px;
+        opacity: 0.8;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="admin-container">
+      <div class="header">
+        <h1>🎛️ HomeSync Radio Admin</h1>
+        <p>Manage your radio station and playlist</p>
+      </div>
+
+      <div class="error" id="errorMessage"></div>
+
+      <div class="panel current-track">
+        <h2>📻 Currently Playing</h2>
+        <div class="track-info" id="currentTrackInfo">
+          <div class="track-title" id="currentTrackTitle">Loading...</div>
+          <div class="track-meta">
+            <span>
+              <span class="status-indicator paused" id="statusIndicator"></span>
+              <span class="status-text" id="statusText">Paused</span>
+            </span>
+            <span id="trackIndex">-/-</span>
+          </div>
+          <div class="progress-container">
+            <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+          </div>
+          <div class="time-display">
+            <span id="currentTime">0:00</span>
+            <span id="totalTime">0:00</span>
+          </div>
+        </div>
+        
+        <div class="controls">
+          <button class="btn primary" id="playBtn">▶️ Play</button>
+          <button class="btn" id="pauseBtn">⏸️ Pause</button>
+          <button class="btn danger" id="stopBtn">⏹️ Stop</button>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="panel">
+          <h2>🎵 Playlist</h2>
+          <div class="playlist" id="playlist">
+            <div>Loading tracks...</div>
+          </div>
+          <div class="listeners-count">
+            <small>Total tracks: <span id="totalTracks">0</span></small>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>📊 Radio Status</h2>
+          <div id="radioStatus">
+            <div style="margin-bottom: 15px;">
+              <strong>Server Status:</strong> <span id="serverStatus">Checking...</span>
+            </div>
+            <div style="margin-bottom: 15px;">
+              <strong>Radio Started:</strong> <span id="radioStartTime">-</span>
+            </div>
+            <div style="margin-bottom: 15px;">
+              <strong>Current Track:</strong> <span id="currentTrackName">-</span>
+            </div>
+            <div style="margin-bottom: 15px;">
+              <strong>Position:</strong> <span id="currentPosition">0%</span>
+            </div>
+            <div class="listeners-count">
+              <div>🎧 <strong>Admin Panel</strong></div>
+              <small>Visit <a href="/" style="color: #4ade80;">http://localhost:3001</a> to listen</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let currentStatus = {};
+      let tracks = [];
+      let updateInterval;
+
+      // DOM elements
+      const elements = {
+        currentTrackTitle: document.getElementById('currentTrackTitle'),
+        statusIndicator: document.getElementById('statusIndicator'),
+        statusText: document.getElementById('statusText'),
+        trackIndex: document.getElementById('trackIndex'),
+        progressBar: document.getElementById('progressBar'),
+        currentTime: document.getElementById('currentTime'),
+        totalTime: document.getElementById('totalTime'),
+        playlist: document.getElementById('playlist'),
+        totalTracks: document.getElementById('totalTracks'),
+        serverStatus: document.getElementById('serverStatus'),
+        radioStartTime: document.getElementById('radioStartTime'),
+        currentTrackName: document.getElementById('currentTrackName'),
+        currentPosition: document.getElementById('currentPosition'),
+        errorMessage: document.getElementById('errorMessage'),
+        playBtn: document.getElementById('playBtn'),
+        pauseBtn: document.getElementById('pauseBtn'),
+        stopBtn: document.getElementById('stopBtn')
+      };
+
+      // Utility functions
+      function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+      }
+
+      function showError(message) {
+        elements.errorMessage.textContent = message;
+        elements.errorMessage.style.display = 'block';
+        setTimeout(() => {
+          elements.errorMessage.style.display = 'none';
+        }, 5000);
+      }
+
+      // API calls
+      async function apiCall(endpoint, method = 'GET', body = null) {
+        try {
+          const options = {
+            method,
+            headers: { 'Content-Type': 'application/json' }
+          };
+          if (body) options.body = JSON.stringify(body);
+          
+          const response = await fetch(endpoint, options);
+          return await response.json();
+        } catch (error) {
+          console.error('API call failed:', error);
+          showError(`API call failed: ${error.message}`);
+          return null;
+        }
+      }
+
+      // Update radio status
+      async function updateStatus() {
+        const status = await apiCall('/api/radio-status');
+        if (!status) return;
+
+        currentStatus = status;
+
+        // Update current track info
+        if (status.currentTrack) {
+          elements.currentTrackTitle.textContent = status.currentTrack.name;
+          elements.currentTrackName.textContent = status.currentTrack.name;
+          elements.trackIndex.textContent = `${status.currentTrackIndex + 1}/${status.totalTracks}`;
+          elements.totalTime.textContent = formatTime(status.currentTrack.duration);
+          elements.currentTime.textContent = formatTime(status.currentTimeSeconds);
+          
+          // Update progress bar
+          const progress = (status.currentTimeSeconds / status.currentTrack.duration) * 100;
+          elements.progressBar.style.width = `${Math.min(progress, 100)}%`;
+        } else {
+          elements.currentTrackTitle.textContent = 'No track loaded';
+          elements.currentTrackName.textContent = 'None';
+        }
+
+        // Update status indicator
+        elements.statusIndicator.className = `status-indicator ${status.isPlaying ? 'playing' : 'paused'}`;
+        elements.statusText.textContent = status.isPlaying ? 'Playing' : 'Paused';
+        elements.serverStatus.textContent = status.isPlaying ? '🟢 Playing' : '🟡 Paused';
+        elements.currentPosition.textContent = `${(status.currentPosition * 100).toFixed(1)}%`;
+        
+        // Update button states
+        elements.playBtn.disabled = status.isPlaying;
+        elements.pauseBtn.disabled = !status.isPlaying;
+        
+        if (status.startTime) {
+          elements.radioStartTime.textContent = new Date(status.startTime).toLocaleString();
+        }
+
+        // Update playlist highlighting
+        updatePlaylistHighlight(status.currentTrackIndex);
+      }
+
+      // Load tracks
+      async function loadTracks() {
+        const response = await apiCall('/api/tracks');
+        if (!response) return;
+
+        tracks = response.tracks;
+        elements.totalTracks.textContent = tracks.length;
+
+        // Render playlist
+        elements.playlist.innerHTML = tracks.map(track => `
+          <div class="track-item" data-track-id="${track.id}">
+            <div class="track-info-item">
+              <div class="track-name">${track.name}</div>
+              <div class="track-duration">${formatTime(track.duration)}</div>
+            </div>
+          </div>
+        `).join('');
+
+        // Add click listeners
+        document.querySelectorAll('.track-item').forEach(item => {
+          item.addEventListener('click', () => {
+            const trackId = parseInt(item.dataset.trackId);
+            selectTrack(trackId);
+          });
+        });
+      }
+
+      // Update playlist highlighting
+      function updatePlaylistHighlight(currentIndex) {
+        document.querySelectorAll('.track-item').forEach((item, index) => {
+          item.classList.toggle('current', index === currentIndex);
+        });
+      }
+
+      // Control functions
+      async function selectTrack(trackId) {
+        const result = await apiCall('/api/control/select', 'POST', { trackId });
+        if (result && result.success) {
+          await updateStatus();
+        }
+      }
+
+      async function controlRadio(action) {
+        const result = await apiCall(`/api/control/${action}`, 'POST');
+        if (result && result.success) {
+          await updateStatus();
+        }
+      }
+
+      // Event listeners
+      elements.playBtn.addEventListener('click', () => controlRadio('play'));
+      elements.pauseBtn.addEventListener('click', () => controlRadio('pause'));
+      elements.stopBtn.addEventListener('click', () => controlRadio('stop'));
+
+      // Initialize
+      async function init() {
+        await loadTracks();
+        await updateStatus();
+        
+        // Start real-time updates
+        updateInterval = setInterval(updateStatus, 1000);
+      }
+
+      // Cleanup on page unload
+      window.addEventListener('beforeunload', () => {
+        if (updateInterval) clearInterval(updateInterval);
+      });
+
+      // Start when page loads
+      document.addEventListener('DOMContentLoaded', init);
+    </script>
+  </body>
+</html>

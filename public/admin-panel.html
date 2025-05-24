@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HomeSync Radio - Admin Panel</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #1a2a6c 0%, #b21f1f 50%, #fdbb2d 100%);
+      color: white;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+    }
+    
+    .admin-container {
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 20px;
+      padding: 40px;
+      text-align: center;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      max-width: 700px;
+      width: 100%;
+      position: relative;
+    }
+    
+    h1 {
+      margin: 0 0 10px 0;
+      font-size: 2.5em;
+      font-weight: 700;
+      background: linear-gradient(90deg, #f8ff00, #ff9a00);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .subtitle {
+      font-size: 1.1em;
+      opacity: 0.8;
+      margin-bottom: 30px;
+    }
+    
+    .status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 15px;
+    }
+    
+    .status-indicator {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 8px;
+      background: #ff4444;
+      animation: pulse 2s infinite;
+    }
+    
+    .status-indicator.connected {
+      background: #44ff44;
+    }
+    
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+    
+    .track-list {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      padding: 20px;
+      margin: 20px 0;
+      text-align: left;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .track-item {
+      padding: 15px;
+      margin: 10px 0;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .track-item:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .track-item.active {
+      background: rgba(66, 135, 245, 0.4);
+      border-left: 5px solid #4287f5;
+    }
+    
+    .track-item .track-name {
+      font-weight: bold;
+      font-size: 1.1em;
+    }
+    
+    .track-item .track-info {
+      font-size: 0.9em;
+      opacity: 0.8;
+    }
+    
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin: 20px 0;
+    }
+    
+    .control-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: white;
+      padding: 12px 25px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 1em;
+      font-weight: bold;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .control-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+    
+    .control-btn:active {
+      transform: translateY(1px);
+    }
+    
+    .control-btn.play {
+      background: linear-gradient(90deg, #00c6ff, #0072ff);
+    }
+    
+    .control-btn.pause {
+      background: linear-gradient(90deg, #f83600, #fe8c00);
+    }
+    
+    .control-btn.stop {
+      background: linear-gradient(90deg, #ff0844, #ffb199);
+    }
+    
+    .control-btn i {
+      margin-right: 8px;
+    }
+    
+    .server-info {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+      font-size: 0.9em;
+    }
+    
+    .client-count {
+      font-weight: bold;
+      color: #4287f5;
+    }
+    
+    .refresh-btn {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.9em;
+      transition: all 0.2s ease;
+      margin-top: 10px;
+    }
+    
+    .refresh-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 25px;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      border-radius: 5px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      transform: translateX(150%);
+      transition: transform 0.3s ease;
+    }
+    
+    .notification.show {
+      transform: translateX(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <h1>HomeSync Radio</h1>
+    <p class="subtitle">Admin Control Panel</p>
+    
+    <div class="status">
+      <span class="status-indicator" id="statusDot"></span>
+      <span id="statusText">Connecting to server...</span>
+    </div>
+    
+    <div class="track-list" id="trackList">
+      <!-- Tracks will be loaded here dynamically -->
+      <div class="loading">Loading available tracks...</div>
+    </div>
+    
+    <div class="controls">
+      <button class="control-btn play" id="playBtn">▶️ Play</button>
+      <button class="control-btn pause" id="pauseBtn">⏸️ Pause</button>
+      <button class="control-btn stop" id="stopBtn">⏹️ Stop</button>
+    </div>
+    
+    <div class="server-info">
+      <p>Now Playing: <span id="nowPlaying">None</span></p>
+      <p>Playback Status: <span id="playbackStatus">Stopped</span></p>
+      <p>Connected Clients: <span id="clientCount" class="client-count">0</span></p>
+      <button class="refresh-btn" id="refreshBtn">↻ Refresh Track List</button>
+    </div>
+  </div>
+  
+  <div class="notification" id="notification"></div>
+
+  <script>
+    // Variables
+    let socket;
+    let currentTrackId = null;
+    let trackList = [];
+    let isPlaying = false;
+    
+    // DOM Elements
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+    const trackListElement = document.getElementById('trackList');
+    const playBtn = document.getElementById('playBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const nowPlayingElement = document.getElementById('nowPlaying');
+    const playbackStatusElement = document.getElementById('playbackStatus');
+    const clientCountElement = document.getElementById('clientCount');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const notification = document.getElementById('notification');
+    
+    // Initialize WebSocket connection
+    function connectWebSocket() {
+      // Use current hostname to make it work locally or on a server
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}`;
+      
+      statusDot.className = 'status-indicator';
+      statusText.textContent = 'Connecting to server...';
+      
+      socket = new WebSocket(wsUrl);
+      
+      socket.onopen = () => {
+        statusDot.className = 'status-indicator connected';
+        statusText.textContent = 'Connected to server';
+        
+        // Fetch available tracks
+        requestTrackList();
+        
+        // Request current playback state
+        requestPlaybackState();
+      };
+      
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          handleMessage(data);
+        } catch (e) {
+          showNotification('Error parsing server message');
+        }
+      };
+      
+      socket.onclose = () => {
+        statusDot.className = 'status-indicator';
+        statusText.textContent = 'Disconnected from server';
+        
+        // Try to reconnect after delay
+        setTimeout(connectWebSocket, 5000);
+      };
+      
+      socket.onerror = (error) => {
+        statusText.textContent = 'Connection error';
+        showNotification('WebSocket connection error');
+      };
+    }
+    
+    // Handle server messages
+    function handleMessage(data) {
+      switch (data.type) {
+        case 'tracks':
+          // Update track list
+          trackList = data.tracks;
+          renderTrackList();
+          break;
+          
+        case 'playbackState':
+          // Update playback state
+          updatePlaybackState(data);
+          break;
+          
+        case 'clientCount':
+          // Update connected client count
+          clientCountElement.textContent = data.count;
+          break;
+          
+        case 'error':
+          showNotification(`Error: ${data.message}`);
+          break;
+      }
+    }
+    
+    // Request the list of available tracks
+    function requestTrackList() {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: 'getTrackList' }));
+      }
+    }
+    
+    // Request current playback state
+    function requestPlaybackState() {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: 'getPlaybackState' }));
+      }
+    }
+    
+    // Render the track list
+    function renderTrackList() {
+      trackListElement.innerHTML = '';
+      
+      if (trackList.length === 0) {
+        trackListElement.innerHTML = '<div class="loading">No tracks available</div>';
+        return;
+      }
+      
+      trackList.forEach(track => {
+        const trackElement = document.createElement('div');
+        trackElement.className = 'track-item';
+        if (track.id === currentTrackId) {
+          trackElement.classList.add('active');
+        }
+        
+        trackElement.innerHTML = `
+          <div>
+            <div class="track-name">${track.name}</div>
+            <div class="track-info">${track.sizeMB} MB</div>
+          </div>
+        `;
+        
+        trackElement.addEventListener('click', () => {
+          selectTrack(track.id);
+        });
+        
+        trackListElement.appendChild(trackElement);
+      });
+    }
+    
+    // Select a track
+    function selectTrack(trackId) {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ 
+          type: 'selectTrack', 
+          trackId: trackId 
+        }));
+        
+        // Visually update the selected track
+        currentTrackId = trackId;
+        renderTrackList();
+        
+        // Find track name for display
+        const track = trackList.find(t => t.id === trackId);
+        if (track) {
+          nowPlayingElement.textContent = track.name;
+        }
+      }
+    }
+    
+    // Update playback state UI
+    function updatePlaybackState(data) {
+      isPlaying = data.isPlaying;
+      currentTrackId = data.trackId;
+      
+      // Update UI
+      playbackStatusElement.textContent = isPlaying ? 'Playing' : (data.trackId ? 'Paused' : 'Stopped');
+      
+      // Find track name
+      if (data.trackId) {
+        const track = trackList.find(t => t.id === data.trackId);
+        if (track) {
+          nowPlayingElement.textContent = track.name;
+        } else {
+          nowPlayingElement.textContent = `Track ID: ${data.trackId}`;
+        }
+      } else {
+        nowPlayingElement.textContent = 'None';
+      }
+      
+      // Update track list selection
+      renderTrackList();
+    }
+    
+    // Play the currently selected track
+    function playTrack() {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: 'play' }));
+      }
+    }
+    
+    // Pause playback
+    function pauseTrack() {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: 'pause' }));
+      }
+    }
+    
+    // Stop playback
+    function stopTrack() {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: 'stop' }));
+      }
+    }
+    
+    // Show notification
+    function showNotification(message) {
+      notification.textContent = message;
+      notification.classList.add('show');
+      
+      setTimeout(() => {
+        notification.classList.remove('show');
+      }, 3000);
+    }
+    
+    // Initialize the admin panel
+    function initAdminPanel() {
+      // Connect to WebSocket server
+      connectWebSocket();
+      
+      // Set up event listeners
+      playBtn.addEventListener('click', playTrack);
+      pauseBtn.addEventListener('click', pauseTrack);
+      stopBtn.addEventListener('click', stopTrack);
+      refreshBtn.addEventListener('click', requestTrackList);
+      
+      // Request updates periodically
+      setInterval(() => {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          requestPlaybackState();
+        }
+      }, 5000);
+    }
+    
+    // Start the admin panel
+    document.addEventListener('DOMContentLoaded', initAdminPanel);
+  </script>
+</body>
+</html>
