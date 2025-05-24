@@ -1,0 +1,34 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+Description: Rules for app
+Globs: /**/*
+---
+
+- DO NOT worry about formatting, I have my own formatter tool.
+
+# Tech stack
+- Javascript for programming language
+- Node-Express for server side app
+- vanilla html, JS, css for UI
+- yarn for package manager and bundler
+- vite for build tool
+
+# Coding Approach
+- Always follow SOLID, DRY, KISS principles for the software developement rather than jumping on conclusion.
+- Always follow best practices to organize files, modules, code, functions etc...
+
+# Project Title
+- Telegram Member Scraping & Adding to my own group (Without Block Risk)
+
+# Description:
+- Scrape active and real members from a Telegram group and channel (links will be provided).
+- Add these members to my own group and channel safely.
+- Use a method that ensures no risk of blocking or banning my Telegram account.
+- Should have experience in Telegram automation and scraping tools (like Telethon, Pyrogram, or other custom bots).
+- Must follow safe limits and strategies to avoid spam detection.
+
+
