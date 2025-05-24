@@ -96,8 +96,7 @@ function preloadCurrentTrack() {
 // Initialize music files
 loadMusicFiles()
 
-// Set radio to play automatically when server starts
-isPlaying = true
+// Radio starts in paused state - wait for admin panel command to playisPlaying = false
 
 // Get current playback position in the current track
 function getCurrentPosition() {
