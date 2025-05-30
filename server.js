@@ -85,14 +85,8 @@ async function loadMusicFiles() {
 		if (musicFiles.length > 0) {
 			currentTrack = musicFiles[0]
 			console.log(`🎵 Loaded ${musicFiles.length} music files`)
-			musicFiles.forEach((track, i) => {
-				console.log(
-					`   ${i}: ${track.name} (${Math.round(
-						track.estimatedDurationMs / 1000
-					)}s)`
-				)
-			})
-
+			// Remove individual track listing here since we show it later
+			
 			// Load the first track
 			preloadCurrentTrack()
 		} else {
@@ -609,18 +603,19 @@ server.listen(PORT, async () => {
 	// Load music files asynchronously
 	await loadMusicFiles()
 
-	// Log the actual tracks found (debugging)
-	console.log(`🔍 TRACKS FOUND: ${musicFiles.length} files`)
-	musicFiles.forEach((track, i) => {
-		console.log(
-			`   Track ${i}: ${track.name}, ID: ${track.id}, Duration: ${Math.round(
-				track.estimatedDurationMs / 1000
-			)}s`
-		)
-	})
-
-	if (currentTrack) {
-		console.log(`🎧 Current Track: ${currentTrack.name}`)
+	// Show comprehensive track listing
+	if (musicFiles.length > 0) {
+		console.log(`\n🎧 Available Tracks:`)
+		musicFiles.forEach((track, i) => {
+			const indicator = i === currentTrackIndex ? '▶️' : '  '
+			console.log(
+				`${indicator} ${i + 1}. ${track.name} (${Math.round(
+					track.estimatedDurationMs / 1000
+				)}s)`
+			)
+		})
+		
+		console.log(`\n🎧 Current Track: ${currentTrack.name}`)
 		console.log(
 			`📅 Radio initialized at: ${new Date(
 				radioStartTime
@@ -631,9 +626,11 @@ server.listen(PORT, async () => {
 		} else {
 			console.log(`⏸️ Radio is PAUSED. Use admin panel to start playback.`)
 		}
+	} else {
+		console.log('\n⚠️  No music files found. Please add MP3 or OGG files to the "music" directory.')
 	}
 
-	console.log(`🔄 Starting sync broadcast service...`)
+	console.log(`\n🔄 Starting sync broadcast service...`)
 	startSyncBroadcast()
 
 	console.log(`📻 Starting status logging...`)
