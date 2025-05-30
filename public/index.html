@@ -1,456 +1,635 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HomeSync Radio</title>
-  <style>
-    body {
-      font-family: 'Arial', sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      margin: 0;
-      padding: 20px;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .radio-container {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 20px;
-      padding: 40px;
-      text-align: center;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-      max-width: 400px;
-      width: 100%;
-    }
-    
-    h1 {
-      margin: 0 0 10px 0;
-      font-size: 2.5em;
-      font-weight: 300;
-    }
-    
-    .subtitle {
-      font-size: 1.1em;
-      opacity: 0.8;
-      margin-bottom: 30px;
-    }
-    
-    .status {
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 10px;
-      padding: 15px;
-      margin: 20px 0;
-      font-size: 0.9em;
-    }
-    
-    .status-indicator {
-      display: inline-block;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      margin-right: 8px;
-      background: #ff4444;
-      animation: pulse 2s infinite;
-    }
-    
-    .status-indicator.playing {
-      background: #44ff44;
-    }
-    
-    @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.5; }
-      100% { opacity: 1; }
-    }
-    
-    .audio-container {
-      margin: 20px 0;
-      position: relative;
-    }
-    
-    audio {
-      width: 100%;
-      outline: none;
-      border-radius: 10px;
-    }
-    
-    .listeners {
-      font-size: 0.8em;
-      opacity: 0.7;
-      margin-top: 15px;
-    }
-    
-    .error-message {
-      background: rgba(255, 68, 68, 0.2);
-      border: 1px solid rgba(255, 68, 68, 0.5);
-      border-radius: 10px;
-      padding: 10px;
-      margin: 10px 0;
-      display: none;
-    }
-    
-    .admin-link {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      padding: 10px;
-      margin-top: 20px;
-      font-size: 0.8em;
-    }
-    
-    .admin-link a {
-      color: #4ade80;
-      text-decoration: none;
-    }
-    
-    .admin-link a:hover {
-      text-decoration: underline;
-    }
-    
-    .play-button {
-      background: rgba(255, 255, 255, 0.2);
-      border: none;
-      border-radius: 50px;
-      color: white;
-      padding: 12px 30px;
-      font-size: 16px;
-      cursor: pointer;
-      margin: 15px auto;
-      display: block;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    }
-    
-    .play-button:hover {
-      background: rgba(255, 255, 255, 0.3);
-      transform: scale(1.05);
-    }
-    
-    .play-button.hidden {
-      display: none;
-    }
-    
-    .sync-option {
-      margin-top: 20px;
-      padding: 10px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      font-size: 0.9em;
-    }
-    
-    .sync-badge {
-      display: inline-block;
-      background: rgba(255, 136, 0, 0.8);
-      color: white;
-      padding: 2px 8px;
-      border-radius: 10px;
-      font-size: 0.7em;
-      margin-left: 5px;
-      vertical-align: middle;
-    }
-    
-    .sync-link {
-      display: inline-block;
-      margin-top: 8px;
-      color: #4ade80;
-      text-decoration: none;
-    }
-    
-    .sync-link:hover {
-      text-decoration: underline;
-    }
-  </style>
-</head>
-<body>
-  <div class="radio-container">
-    <h1>🎶 HomeSync Radio</h1>
-    <p class="subtitle">Live streaming radio - everyone hears the same thing!</p>
-    
-    <div class="status">
-      <span class="status-indicator" id="statusDot"></span>
-      <span id="statusText">Connecting...</span>
-    </div>
-    
-    <div class="error-message" id="errorMessage"></div>
-    
-    <div class="audio-container">
-      <audio id="radioStream" preload="none"></audio>
-      <button id="playButton" class="play-button">▶️ Click to Play</button>
-    </div>
-    
-    <div class="listeners">
-      <span id="listenerInfo">🎧 Tuned in to the live stream</span>
-    </div>
-    
-    <div class="sync-option">
-      <strong>Want perfect synchronization?</strong>
-      <span class="sync-badge">NEW!</span>
-      <p>Try our new synchronized player for perfect timing across all devices!</p>
-      <a href="/sync-player.html" class="sync-link">➡️ Switch to Synchronized Player</a>
-    </div>
-    
-    <div class="admin-link">
-      <a href="/admin">Admin Panel</a> | 
-      <a href="/choose-player.html">Choose Player</a>
-    </div>
-  </div>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>HomeSync Radio - Synchronized Player</title>
+		<style>
+			body {
+				font-family: 'Arial', sans-serif;
+				background: linear-gradient(
+					135deg,
+					#1a2a6c 0%,
+					#b21f1f 50%,
+					#fdbb2d 100%
+				);
+				color: white;
+				margin: 0;
+				padding: 20px;
+				min-height: 100vh;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				overflow-x: hidden;
+			}
 
-  <script>
-    const audio = document.getElementById('radioStream');
-    const statusDot = document.getElementById('statusDot');
-    const statusText = document.getElementById('statusText');
-    const errorMessage = document.getElementById('errorMessage');
-    const playButton = document.getElementById('playButton');
-    let reconnectAttempts = 0;
-    const maxReconnectAttempts = 5;
-    let lastConnectionAttempt = 0;
-    const connectionThrottleMs = 2000; // Prevent rapid reconnection attempts
-    
-    function showError(message) {
-      errorMessage.textContent = message;
-      errorMessage.style.display = 'block';
-      setTimeout(() => {
-        errorMessage.style.display = 'none';
-      }, 5000);
-    }
-    
-    function updateStatus(text, isPlaying = false) {
-      statusText.textContent = text;
-      statusDot.className = `status-indicator ${isPlaying ? 'playing' : ''}`;
-    }
-    
-    function connectToRadio(force = false) {
-      // Throttle connection attempts
-      const now = Date.now();
-      if (!force && now - lastConnectionAttempt < connectionThrottleMs) {
-        console.log('Connection attempt throttled, too many requests');
-        return;
-      }
-      
-      lastConnectionAttempt = now;
-      updateStatus('Connecting to radio...');
-      
-      // Abort any existing connections
-      if (audio.src) {
-        audio.pause();
-        audio.removeAttribute('src');
-        audio.load();
-      }
-      
-      // Add timestamp to prevent caching
-      const streamUrl = `/stream?t=${Date.now()}`;
-      
-      // Check server status first
-      fetch('/api/radio-status')
-        .then(response => response.json())
-        .then(status => {
-          if (!status.isPlaying) {
-            updateStatus('⏸️ Radio is paused on server', false);
-            showError('The radio is currently paused on the server. Please wait for it to resume.');
-            setTimeout(() => getRadioStatus(), 3000);
-            // Show play button even when server is paused (clicking will check again)
-            playButton.style.display = 'block';
-            return;
-          }
-          
-          // Server is playing, attempt to connect
-          audio.src = streamUrl;
-          
-          // Add specific event handlers inside this promise chain
-          const loadingTimeout = setTimeout(() => {
-            if (audio.readyState < 3) { // HAVE_FUTURE_DATA
-              showError('Stream is taking too long to load. Retrying...');
-              audio.load(); // Force reload
-            }
-          }, 5000);
-          
-          const playPromise = audio.play();
-          if (playPromise !== undefined) {
-            playPromise.catch(e => {
-              console.error('Playback failed:', e);
-              clearTimeout(loadingTimeout);
-              if (e.name === 'NotAllowedError') {
-                updateStatus('Click Play button to start listening');
-                // Make play button visible when autoplay is blocked
-                playButton.style.display = 'block';
-              } else {
-                updateStatus('Connection failed');
-                setTimeout(() => connectToRadio(true), 3000);
-              }
-            });
-          }
-        })
-        .catch(error => {
-          console.error('Failed to check radio status:', error);
-          updateStatus('Server connection error');
-          showError('Cannot connect to the radio server. Please try again later.');
-        });
-    }
-    
-    // Clear all previous event listeners
-    function clearAudioEvents() {
-      const eventsToClear = ['loadstart', 'loadedmetadata', 'canplay', 'playing', 'error', 'ended', 'stalled', 'suspend', 'waiting'];
-      eventsToClear.forEach(event => {
-        audio.removeEventListener(event, () => {});
-      });
-    }
-    
-    // Setup audio event listeners
-    function setupAudioEvents() {
-      clearAudioEvents();
-      
-      audio.addEventListener('loadstart', () => {
-        updateStatus('Loading stream...');
-        console.log('Stream loading started');
-      });
-      
-      audio.addEventListener('loadedmetadata', () => {
-        console.log('Stream metadata loaded');
-      });
-      
-      audio.addEventListener('canplay', () => {
-        updateStatus('Stream ready, starting playback...');
-        console.log('Stream can play');
-      });
-      
-      audio.addEventListener('playing', () => {
-        updateStatus('🎵 Live Radio Playing', true);
-        reconnectAttempts = 0;
-        console.log('Stream is playing');
-        // Hide play button when audio is playing
-        playButton.style.display = 'none';
-      });
-      
-      audio.addEventListener('stalled', () => {
-        console.log('Stream stalled');
-        if (reconnectAttempts < maxReconnectAttempts) {
-          showError('Stream stalled. Attempting to recover...');
-        }
-      });
-      
-      audio.addEventListener('waiting', () => {
-        console.log('Stream waiting for data');
-      });
-      
-      audio.addEventListener('error', (e) => {
-        const errorCode = audio.error ? audio.error.code : 'unknown';
-        console.error(`Audio error: ${errorCode}`, e);
-        updateStatus('Connection lost');
-        
-        if (reconnectAttempts < maxReconnectAttempts) {
-          reconnectAttempts++;
-          showError(`Connection lost. Reconnecting... (${reconnectAttempts}/${maxReconnectAttempts})`);
-          setTimeout(() => connectToRadio(true), 2000 * reconnectAttempts);
-        } else {
-          showError('Unable to connect to radio after multiple attempts. The server may be down or unreachable.');
-        }
-      });
-      
-      audio.addEventListener('ended', () => {
-        console.log('Stream ended');
-        // Audio ended, reconnect (this handles when the stream loops)
-        setTimeout(() => connectToRadio(true), 1000);
-      });
-    }
-    
-    // Remove all user controls from audio element
-    audio.controls = false;
-    audio.addEventListener('contextmenu', (e) => e.preventDefault());
-    
-    // Set other audio properties
-    audio.preload = 'auto';
-    audio.crossOrigin = 'anonymous';
-    
-    // Get radio status for real-time updates    
-    async function getRadioStatus() {
-      try {
-        const response = await fetch('/api/radio-status');
-        const status = await response.json();
-        
-        if (status.currentTrack) {
-          // Update track name
-          document.querySelector('.subtitle').textContent = 
-            `🎵 Now Playing: ${status.currentTrack.name}`;
-          
-          // Update status indicator based on server state AND local playback state
-          if (status.isPlaying) {
-            if (!audio.paused && audio.readyState > 2) {
-              // Only show playing if both server is playing AND local audio is actually playing
-              updateStatus('🎵 Live Radio Playing', true);
-            } else {
-              // Server is playing but local audio is not playing yet
-              updateStatus('Click Play button to start listening', false);
-              playButton.style.display = 'block';
-            }
-            
-            // If radio is playing on server but audio is paused locally, don't reconnect automatically
-            // This allows user to control when to start playing
-            if (audio.paused && (!audio.src || audio.error)) {
-              console.log('Server is playing but local audio is paused, waiting for user interaction');
-              // Don't auto-reconnect here
-            }
-          } else {
-            updateStatus('⏸️ Radio Paused', false);
-            
-            // If radio is paused on server but audio is playing locally, pause it
-            if (!audio.paused) {
-              console.log('Server is paused, stopping local audio');
-              audio.pause();
-            }
-          }
-          
-          // Update listener info with track index
-          document.getElementById('listenerInfo').textContent =
-            `🎧 Track ${status.currentTrackIndex + 1}/${status.totalTracks} - Tuned in to the live stream`;
-        } else {
-          document.querySelector('.subtitle').textContent =
-            'Live streaming radio - No track loaded';
-          updateStatus('No track available', false);
-        }
-      } catch (error) {
-        console.log('Could not fetch radio status:', error);
-        // Only show error if we have multiple failed attempts
-        if (reconnectAttempts > 1) {
-          showError('Lost connection to server. Will keep trying to reconnect.');
-        }
-      }
-    }
+			.radio-container {
+				background: rgba(0, 0, 0, 0.4);
+				border-radius: 20px;
+				padding: 40px;
+				text-align: center;
+				backdrop-filter: blur(10px);
+				box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+				max-width: 500px;
+				width: 100%;
+				position: relative;
+			}
 
-    // Setup audio event handlers
-    setupAudioEvents();
+			h1 {
+				margin: 0 0 10px 0;
+				font-size: 2.5em;
+				font-weight: 700;
+				background: linear-gradient(90deg, #f8ff00, #ff9a00);
+				-webkit-background-clip: text;
+				background-clip: text;
+				-webkit-text-fill-color: transparent;
+				text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+			}
 
-    // Auto-connect when page loads
-    document.addEventListener('DOMContentLoaded', () => {
-      // Connect immediately without delay
-      connectToRadio();
-      
-      // First status check
-      getRadioStatus();
-      
-      // Update status regularly
-      setInterval(getRadioStatus, 3000);
-      
-      // Add click handler for play button
-      playButton.addEventListener('click', () => {
-        playButton.textContent = '🔄 Connecting...';
-        connectToRadio(true);
-      });
-    });
-    
-    // Handle page visibility changes (reconnect when tab becomes active)
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) {
-        getRadioStatus();
-        if (audio.paused) {
-          setTimeout(() => connectToRadio(), 500);
-        }
-      }
-    });
-  </script>
-</body>
-</html> 
+			.subtitle {
+				font-size: 1.1em;
+				opacity: 0.8;
+				margin-bottom: 30px;
+			}
+
+			.now-playing {
+				background: rgba(255, 255, 255, 0.1);
+				border-radius: 15px;
+				padding: 20px;
+				margin: 20px 0;
+				position: relative;
+			}
+
+			.track-title {
+				font-size: 1.5em;
+				font-weight: 600;
+				margin-bottom: 10px;
+				word-break: break-word;
+			}
+
+			.progress-container {
+				width: 100%;
+				height: 10px;
+				background: rgba(255, 255, 255, 0.1);
+				border-radius: 5px;
+				margin: 20px 0;
+				position: relative;
+				overflow: hidden;
+			}
+
+			.progress-bar {
+				height: 100%;
+				background: linear-gradient(90deg, #00c6ff, #0072ff);
+				border-radius: 5px;
+				width: 0%;
+				transition: width 1s linear;
+			}
+
+			.time-display {
+				display: flex;
+				justify-content: space-between;
+				margin-top: 5px;
+				font-size: 0.9em;
+				opacity: 0.8;
+			}
+
+			.status {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				margin-bottom: 15px;
+			}
+
+			.status-indicator {
+				display: inline-block;
+				width: 12px;
+				height: 12px;
+				border-radius: 50%;
+				margin-right: 8px;
+				background: #ff4444;
+				animation: pulse 2s infinite;
+			}
+
+			.status-indicator.connected {
+				background: #44ff44;
+			}
+
+			.status-indicator.playing {
+				background: #4488ff;
+			}
+
+			.status-indicator.syncing {
+				background: #ffaa44;
+			}
+
+			@keyframes pulse {
+				0% {
+					opacity: 1;
+				}
+				50% {
+					opacity: 0.5;
+				}
+				100% {
+					opacity: 1;
+				}
+			}
+
+			.controls {
+				display: flex;
+				justify-content: center;
+				margin: 20px 0;
+			}
+
+			.track-info {
+				font-size: 0.9em;
+				opacity: 0.8;
+				margin: 10px 0;
+			}
+
+			.connection-info {
+				position: absolute;
+				bottom: -30px;
+				right: 20px;
+				font-size: 0.8em;
+				opacity: 0.6;
+			}
+
+			.sync-status {
+				margin-top: 10px;
+				font-size: 0.9em;
+				padding: 5px 10px;
+				border-radius: 15px;
+				background: rgba(255, 255, 255, 0.1);
+				display: inline-block;
+			}
+
+			.volume-container {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				margin: 15px 0;
+			}
+
+			.volume-slider {
+				width: 100px;
+				margin: 0 10px;
+			}
+
+			.interaction-required {
+				position: absolute;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				background: rgba(0, 0, 0, 0.85);
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				z-index: 100;
+				border-radius: 20px;
+				cursor: pointer;
+			}
+
+			.interaction-required.hidden {
+				display: none;
+			}
+
+			.big-play-button {
+				width: 80px;
+				height: 80px;
+				border-radius: 50%;
+				background: linear-gradient(135deg, #f83600, #fe8c00);
+				border: none;
+				margin-bottom: 20px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				cursor: pointer;
+				box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+				transition: transform 0.2s;
+			}
+
+			.big-play-button:hover {
+				transform: scale(1.1);
+			}
+
+			.big-play-icon {
+				font-size: 40px;
+				color: white;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="radio-container">
+			<div id="interactionRequired" class="interaction-required">
+				<button class="big-play-button">
+					<span class="big-play-icon">▶️</span>
+				</button>
+				<h2>Click to Activate Audio</h2>
+				<p>Browser security requires user interaction before playing audio</p>
+			</div>
+
+			<h1>HomeSync Radio</h1>
+			<p class="subtitle">
+				Synchronized Playback - Everyone hears the same thing!
+			</p>
+
+			<div class="status">
+				<span class="status-indicator" id="statusDot"></span>
+				<span id="statusText">Connecting to server...</span>
+			</div>
+
+			<div class="now-playing">
+				<div class="track-title" id="trackTitle">Loading...</div>
+				<div class="track-info" id="trackInfo"></div>
+
+				<div class="progress-container">
+					<div class="progress-bar" id="progressBar"></div>
+				</div>
+
+				<div class="time-display">
+					<span id="currentTime">0:00</span>
+					<span id="totalTime">0:00</span>
+				</div>
+			</div>
+
+			<div class="volume-container">
+				<span>🔈</span>
+				<input
+					type="range"
+					class="volume-slider"
+					id="volumeSlider"
+					min="0"
+					max="1"
+					step="0.05"
+					value="1.0"
+				/>
+				<span>🔊</span>
+			</div>
+
+			<div class="sync-status" id="syncStatus">Waiting for sync...</div>
+
+			<div class="connection-info" id="connectionInfo"></div>
+		</div>
+
+		<script>
+			// Variables for Web Audio API
+			let audioContext
+			let audioBuffer = null
+			let audioSource = null
+			let audioStartTime = 0
+			let trackDuration = 0
+			let serverTimeOffset = 0
+			let isPlaying = false
+			let isSyncing = false
+			let currentTrackId = null
+			let syncInterval = null
+			let updateInterval = null
+			let serverStartTime = 0
+			let volumeNode = null
+			let volumeValue = 1.0 // Default volume
+			let audioInitialized = false
+
+			// DOM Elements
+			const statusDot = document.getElementById('statusDot')
+			const statusText = document.getElementById('statusText')
+			const trackTitle = document.getElementById('trackTitle')
+			const trackInfo = document.getElementById('trackInfo')
+			const progressBar = document.getElementById('progressBar')
+			const currentTimeDisplay = document.getElementById('currentTime')
+			const totalTimeDisplay = document.getElementById('totalTime')
+			const syncStatus = document.getElementById('syncStatus')
+			const connectionInfo = document.getElementById('connectionInfo')
+			const volumeSlider = document.getElementById('volumeSlider')
+			const interactionRequired = document.getElementById('interactionRequired')
+
+			// Initialize WebSocket connection
+			let socket
+			function connectWebSocket() {
+				// Use current hostname to make it work locally or on a server
+				const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+				const wsUrl = `${protocol}//${window.location.host}`
+
+				statusDot.className = 'status-indicator'
+				statusText.textContent = 'Connecting to server...'
+
+				socket = new WebSocket(wsUrl)
+
+				socket.onopen = () => {
+					statusDot.className = 'status-indicator connected'
+					statusText.textContent = 'Connected to server'
+					connectionInfo.textContent = 'Connection: Active'
+
+					// Identify as a listener
+					socket.send(
+						JSON.stringify({
+							type: 'identify',
+							clientType: 'listener',
+						})
+					)
+
+					// Request initial sync data
+					socket.send(JSON.stringify({ type: 'requestSync' }))
+				}
+
+				socket.onmessage = (event) => {
+					// Check if it's a binary message (audio data)
+					if (event.data instanceof Blob) {
+						handleAudioData(event.data)
+					} else {
+						// Handle JSON messages
+						try {
+							const data = JSON.parse(event.data)
+							handleMessage(data)
+						} catch (e) {
+							syncStatus.textContent = 'Error: Failed to parse message'
+						}
+					}
+				}
+
+				socket.onclose = () => {
+					statusDot.className = 'status-indicator'
+					statusText.textContent = 'Disconnected from server'
+					connectionInfo.textContent = 'Connection: Closed'
+
+					// Clear intervals
+					if (syncInterval) clearInterval(syncInterval)
+					if (updateInterval) clearInterval(updateInterval)
+
+					// Try to reconnect after delay
+					setTimeout(connectWebSocket, 5000)
+				}
+
+				socket.onerror = (error) => {
+					statusText.textContent = 'Connection error'
+					syncStatus.textContent = 'WebSocket connection error'
+				}
+			}
+
+			// Initialize Audio Context
+			function initAudioContext() {
+				// Check if audio already initialized
+				if (audioInitialized) return
+
+				try {
+					// Create audio context
+					audioContext = new (window.AudioContext ||
+						window.webkitAudioContext)()
+
+					// Create gain node for volume control
+					volumeNode = audioContext.createGain()
+					volumeNode.gain.value = volumeValue
+					volumeNode.connect(audioContext.destination)
+
+					// Mark as initialized and hide interaction message
+					audioInitialized = true
+					interactionRequired.classList.add('hidden')
+
+					// If we already have audio data, process it
+					if (audioBuffer) {
+						decodeAudioData(audioBuffer)
+					}
+				} catch (e) {
+					syncStatus.textContent = 'Error initializing audio'
+				}
+
+				// Initialize volume control
+				volumeSlider.value = volumeValue
+				volumeSlider.addEventListener('input', (e) => {
+					volumeValue = parseFloat(e.target.value)
+					if (volumeNode) {
+						volumeNode.gain.value = volumeValue
+					}
+				})
+			}
+
+			// Handle received messages
+			function handleMessage(data) {
+				switch (data.type) {
+					case 'initial':
+					case 'sync':
+						// Calculate server time offset (for synchronization)
+						const localTime = Date.now()
+						serverTimeOffset = data.serverTime - localTime
+
+						// Update track information
+						if (data.trackId !== null && data.trackId !== currentTrackId) {
+							currentTrackId = data.trackId
+							trackTitle.textContent = data.trackName || 'Unknown Track'
+							trackInfo.textContent = `Track ID: ${data.trackId}`
+						}
+
+						// Update playing state
+						isPlaying = data.isPlaying
+						serverStartTime = data.startTime
+						trackDuration = data.trackDuration
+
+						// Update time displays
+						totalTimeDisplay.textContent = formatTime(trackDuration)
+
+						// Update status
+						updateStatus()
+
+						// Synchronize playback
+						synchronizePlayback(data)
+						break
+
+					case 'trackChange':
+						// Track changed on server
+						currentTrackId = data.trackId
+						trackTitle.textContent = data.trackName || 'Unknown Track'
+						trackInfo.textContent = `Track ID: ${data.trackId}`
+						serverStartTime = data.startTime
+
+						// Need to request fresh audio data
+						socket.send(JSON.stringify({ type: 'requestSync' }))
+
+						syncStatus.textContent = 'New track detected, syncing...'
+						statusDot.className = 'status-indicator syncing'
+						break
+
+					case 'playbackState':
+						// Playback state changed on server
+						isPlaying = data.isPlaying
+						serverStartTime = data.startTime
+
+						// Synchronize with the new state
+						synchronizePlayback(data)
+						updateStatus()
+						break
+				}
+			}
+
+			// Handle audio data from server
+			function handleAudioData(blob) {
+				const reader = new FileReader()
+				reader.onload = (e) => {
+					audioBuffer = e.target.result
+
+					// If audio context is ready, decode the data
+					if (audioContext) {
+						decodeAudioData(audioBuffer)
+					} else {
+						syncStatus.textContent = 'Click anywhere to enable audio'
+					}
+				}
+
+				reader.onerror = () => {
+					syncStatus.textContent = 'Error loading audio data'
+				}
+
+				reader.readAsArrayBuffer(blob)
+			}
+
+			// Decode audio data using Web Audio API
+			function decodeAudioData(arrayBuffer) {
+				audioContext
+					.decodeAudioData(arrayBuffer)
+					.then((buffer) => {
+						// Store the decoded buffer
+						audioBuffer = buffer
+						trackDuration = buffer.duration * 1000 // Convert to ms
+						totalTimeDisplay.textContent = formatTime(trackDuration)
+
+						// Automatically synchronize playback
+						synchronizePlayback({ isPlaying })
+					})
+					.catch((err) => {
+						syncStatus.textContent = 'Error decoding audio'
+					})
+			}
+
+			// Synchronize playback with server
+			function synchronizePlayback(data) {
+				if (!audioContext) {
+					syncStatus.textContent = 'Click to initialize audio'
+					return
+				}
+
+				if (!audioBuffer || !(audioBuffer instanceof AudioBuffer)) {
+					syncStatus.textContent = 'Waiting for audio data...'
+					return
+				}
+
+				// Stop current playback if active
+				if (audioSource) {
+					audioSource.onended = null // Remove event listener
+					try {
+						audioSource.stop()
+					} catch (e) {
+						// Ignore errors when stopping
+					}
+					audioSource = null
+				}
+
+				// If not playing on server, don't start new playback
+				if (!data.isPlaying) {
+					syncStatus.textContent = 'Playback paused on server'
+					statusDot.className = 'status-indicator'
+					return
+				}
+
+				try {
+					// Calculate where in the audio we should start playing
+					const serverNow = Date.now() + serverTimeOffset
+					const elapsedSinceStart = serverNow - serverStartTime
+					const position = (elapsedSinceStart % trackDuration) / 1000 // Convert to seconds
+
+					// Create new audio source
+					audioSource = audioContext.createBufferSource()
+					audioSource.buffer = audioBuffer
+					audioSource.connect(volumeNode)
+
+					// Set up event for when playback ends (loop manually for better sync)
+					audioSource.onended = () => {
+						// Wait briefly before restarting to allow server to detect track change
+						setTimeout(() => {
+							synchronizePlayback({ isPlaying: true })
+						}, 100)
+					}
+
+					// Start playback at the calculated position
+					audioSource.start(0, position)
+					audioStartTime = audioContext.currentTime - position
+
+					syncStatus.textContent = 'Playback synchronized'
+					statusDot.className = 'status-indicator playing'
+
+					// Start progress updates
+					startProgressUpdates()
+				} catch (e) {
+					syncStatus.textContent = 'Playback error'
+				}
+			}
+
+			// Start regular progress updates
+			function startProgressUpdates() {
+				if (updateInterval) clearInterval(updateInterval)
+
+				updateInterval = setInterval(() => {
+					if (audioContext && audioSource && isPlaying) {
+						// Calculate current position
+						const elapsedTime =
+							(audioContext.currentTime - audioStartTime) * 1000
+						const position = elapsedTime % trackDuration
+
+						// Update progress bar
+						progressBar.style.width = `${(position / trackDuration) * 100}%`
+
+						// Update time display
+						currentTimeDisplay.textContent = formatTime(position)
+					}
+				}, 100)
+			}
+
+			// Update status text based on current state
+			function updateStatus() {
+				if (isPlaying) {
+					statusText.textContent = '🎵 Now Playing'
+					statusDot.className = 'status-indicator playing'
+				} else {
+					statusText.textContent = '⏸️ Playback Paused'
+					statusDot.className = 'status-indicator'
+				}
+			}
+
+			// Format time in mm:ss
+			function formatTime(ms) {
+				const totalSeconds = Math.floor(ms / 1000)
+				const minutes = Math.floor(totalSeconds / 60)
+				const seconds = totalSeconds % 60
+				return `${minutes}:${seconds.toString().padStart(2, '0')}`
+			}
+
+			// Initialize application
+			function init() {
+				// Setup user interaction to initialize audio
+				document.addEventListener('click', () => {
+					if (!audioInitialized) {
+						initAudioContext()
+					}
+				})
+
+				// Specific handler for the interaction overlay
+				interactionRequired.addEventListener('click', () => {
+					initAudioContext()
+				})
+
+				// Connect to WebSocket server
+				connectWebSocket()
+
+				// Set up regular sync checks
+				syncInterval = setInterval(() => {
+					if (socket && socket.readyState === WebSocket.OPEN) {
+						socket.send(JSON.stringify({ type: 'requestSync' }))
+					}
+				}, 30000) // Request sync every 30 seconds for long-term accuracy
+			}
+
+			// Start the application
+			document.addEventListener('DOMContentLoaded', init)
+		</script>
+	</body>
+</html>
