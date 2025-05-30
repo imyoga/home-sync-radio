@@ -4,10 +4,8 @@
   "description": "HomeSync Radio with synchronized and traditional streaming options",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "start:legacy": "node app.js",
-    "start:all": "nodemon start-servers.js",
-    "dev": "nodemon server.js"
+    "start": "node start-servers.js",
+    "dev": "nodemon start-servers.js"
   },
   "author": "",
   "license": "MIT",
