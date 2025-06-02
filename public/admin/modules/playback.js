@@ -212,7 +212,7 @@ function playTrack(state, ui, ws) {
 	ws.sendMessage({ type: 'play' })
 
 	// Also try HTTP API
-	fetch('/api/control/play', {
+	fetch('/api/radio/control/play', {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
@@ -244,7 +244,7 @@ function pauseTrack(state, ui, ws) {
 	ws.sendMessage({ type: 'pause' })
 
 	// Also try HTTP API
-	fetch('/api/control/pause', {
+	fetch('/api/radio/control/pause', {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
@@ -274,7 +274,7 @@ function stopTrack(state, ui, ws) {
 	ws.sendMessage({ type: 'stop' })
 
 	// Also try HTTP API
-	fetch('/api/control/stop', {
+	fetch('/api/radio/control/stop', {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',

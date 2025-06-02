@@ -117,7 +117,7 @@ function selectTrack(trackId, state, ui, ws) {
 	})
 
 	// Also try the HTTP API as a fallback
-	fetch('/api/control/select', {
+	fetch('/api/radio/control/select', {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
