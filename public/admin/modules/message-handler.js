@@ -24,7 +24,7 @@ export function initMessageHandler(state, ui) {
  * @param {Object} ui - UI elements and methods
  */
 function handleMessage(data, state, ui) {
-	console.log('Received message:', data)
+	// console.log('Received message:', data)
 
 	// Log for debugging
 	state.debugLog.unshift({
@@ -36,11 +36,11 @@ function handleMessage(data, state, ui) {
 
 	try {
 		switch (data.type) {
-			case 'tracks':
-				// Update track list
-				console.log('Received tracks data:', data.tracks)
-				// Only update if we actually have tracks
-				if (data.tracks && data.tracks.length > 0) {
+					case 'tracks':
+			// Update track list
+			// console.log('Received tracks data:', data.tracks)
+			// Only update if we actually have tracks
+			if (data.tracks && data.tracks.length > 0) {
 					state.trackList = data.tracks
 
 					// For each track, estimate duration if needed
@@ -49,9 +49,9 @@ function handleMessage(data, state, ui) {
 							// Rough estimate: 1MB ≈ 1 minute
 							track.duration = track.sizeMB * 60
 						}
-						console.log(
-							`Track ${track.id}: ${track.name}, Duration: ${track.duration}s, Size: ${track.sizeMB}MB`
-						)
+						// console.log(
+						// 	`Track ${track.id}: ${track.name}, Duration: ${track.duration}s, Size: ${track.sizeMB}MB`
+						// )
 					})
 
 					// Dispatch event to trigger track list rendering
@@ -61,7 +61,7 @@ function handleMessage(data, state, ui) {
 						})
 					)
 				} else {
-					console.log('No tracks found in data or empty tracks array')
+					// console.log('No tracks found in data or empty tracks array')
 				}
 
 				// Update client count if present
@@ -93,9 +93,9 @@ function handleMessage(data, state, ui) {
 				ui.showNotification(`Error: ${data.message}`)
 				break
 
-			case 'initial':
-				// Handle initial data from server
-				console.log('Initial data received:', data)
+					case 'initial':
+			// Handle initial data from server
+			// console.log('Initial data received:', data)
 
 				if (data.tracks) {
 					state.trackList = data.tracks
@@ -128,7 +128,7 @@ function handleMessage(data, state, ui) {
 								? Math.round(data.trackDuration / 1000)
 								: data.trackDuration
 
-						console.log(`Set track duration to ${state.trackDuration} seconds`)
+						// console.log(`Set track duration to ${state.trackDuration} seconds`)
 					}
 
 					// Check for position info
@@ -140,9 +140,9 @@ function handleMessage(data, state, ui) {
 								: data.currentPosition
 						state.playbackOffset = state.currentPosition
 
-						console.log(
-							`Set current position to ${state.currentPosition} seconds`
-						)
+						// console.log(
+						// 	`Set current position to ${state.currentPosition} seconds`
+						// )
 					}
 
 					// Update track info in UI
@@ -170,9 +170,9 @@ function handleMessage(data, state, ui) {
 				}
 				break
 
-			case 'sync':
-				// Handle sync updates
-				console.log('Sync data received:', data)
+					case 'sync':
+			// Handle sync updates
+			// console.log('Sync data received:', data)
 
 				// Ensure we always have trackId for now playing info
 				if (data.trackId !== undefined) {
@@ -189,9 +189,9 @@ function handleMessage(data, state, ui) {
 								? Math.round(data.trackDuration / 1000)
 								: data.trackDuration
 
-						console.log(
-							`Sync: Set track duration to ${state.trackDuration} seconds`
-						)
+						// console.log(
+						// 	`Sync: Set track duration to ${state.trackDuration} seconds`
+						// )
 					}
 
 					// Check for position
@@ -203,9 +203,9 @@ function handleMessage(data, state, ui) {
 								: data.currentPosition
 						state.playbackOffset = state.currentPosition
 
-						console.log(
-							`Sync: Set current position to ${state.currentPosition} seconds`
-						)
+						// console.log(
+						// 	`Sync: Set current position to ${state.currentPosition} seconds`
+						// )
 					}
 
 					// Always update track info on sync to ensure display is correct
@@ -228,10 +228,10 @@ function handleMessage(data, state, ui) {
 				} else if (state.currentTrackId) {
 					// If sync data doesn't have trackId but we have one in state,
 					// update display with our state information
-					console.log(
-						'Sync missing trackId, using current state trackId:',
-						state.currentTrackId
-					)
+					// console.log(
+					// 	'Sync missing trackId, using current state trackId:',
+					// 	state.currentTrackId
+					// )
 
 					// Try to find track info from our track list
 					const track = state.trackList.find(
@@ -269,9 +269,9 @@ function handleMessage(data, state, ui) {
 					state.currentPosition = 0
 					state.playbackOffset = 0
 
-					console.log(
-						`Track change: Set duration to ${state.trackDuration} seconds`
-					)
+					// console.log(
+					// 	`Track change: Set duration to ${state.trackDuration} seconds`
+					// )
 
 					// Update progress display with the new track info
 					ui.updateProgressDisplay(state.currentPosition, state.trackDuration)
@@ -284,11 +284,11 @@ function handleMessage(data, state, ui) {
 				}
 				break
 
-			default:
-				console.log('Unknown message type:', data.type)
+					default:
+			// console.log('Unknown message type:', data.type)
 		}
 	} catch (error) {
-		console.error('Error processing message:', error)
+		// console.error('Error processing message:', error)
 		ui.showNotification(`Error processing message: ${error.message}`)
 	}
 }
@@ -300,7 +300,7 @@ function handleMessage(data, state, ui) {
  * @param {Object} ui - UI elements and methods
  */
 function updatePlaybackProgress(data, state, ui) {
-	console.log('Progress update:', data)
+	// console.log('Progress update:', data)
 
 	// Convert position and duration from ms to seconds if needed
 	const position =

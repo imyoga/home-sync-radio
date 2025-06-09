@@ -33,19 +33,19 @@ export function initPlayback(state, ui, ws) {
  * @param {Object} ui - UI elements and methods
  */
 export function updatePlaybackState(data, state, ui) {
-	console.log('Updating playback state:', data)
+	// console.log('Updating playback state:', data)
 
 	// Track state changes
 	const trackChanged = state.currentTrackId !== data.trackId
 	const playStateChanged = state.isPlaying !== data.isPlaying
 
 	// Record previous state for debugging
-	console.log('Previous state:', {
-		trackId: state.currentTrackId,
-		isPlaying: state.isPlaying,
-		position: state.currentPosition,
-		duration: state.trackDuration,
-	})
+	// console.log('Previous state:', {
+	// 	trackId: state.currentTrackId,
+	// 	isPlaying: state.isPlaying,
+	// 	position: state.currentPosition,
+	// 	duration: state.trackDuration,
+	// })
 
 	// Update state variables
 	if (data.trackId !== undefined) {
@@ -145,17 +145,17 @@ function startProgressTracking(state, ui) {
 
 		// If still no duration, don't start tracking
 		if (state.trackDuration <= 0) {
-			console.log("Can't start progress tracking: no duration")
+			// console.log("Can't start progress tracking: no duration")
 			return
 		}
 	}
 
-	console.log(
-		'Starting progress tracking with duration:',
-		state.trackDuration,
-		'current position:',
-		state.currentPosition
-	)
+	// console.log(
+	// 	'Starting progress tracking with duration:',
+	// 	state.trackDuration,
+	// 	'current position:',
+	// 	state.currentPosition
+	// )
 
 	// Set the start time if not already set
 	if (!state.playbackStartTime) {
@@ -219,7 +219,7 @@ function playTrack(state, ui, ws) {
 		},
 		body: JSON.stringify({}),
 	}).catch((err) => {
-		console.error('Error playing track via API:', err)
+		// console.error('Error playing track via API:', err)
 		ui.showNotification('Error playing track')
 	})
 
@@ -251,7 +251,7 @@ function pauseTrack(state, ui, ws) {
 		},
 		body: JSON.stringify({}),
 	}).catch((err) => {
-		console.error('Error pausing track via API:', err)
+		// console.error('Error pausing track via API:', err)
 		ui.showNotification('Error pausing track')
 	})
 
@@ -281,7 +281,7 @@ function stopTrack(state, ui, ws) {
 		},
 		body: JSON.stringify({}),
 	}).catch((err) => {
-		console.error('Error stopping track via API:', err)
+		// console.error('Error stopping track via API:', err)
 		ui.showNotification('Error stopping track')
 	})
 

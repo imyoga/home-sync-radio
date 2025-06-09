@@ -35,35 +35,35 @@ export function initWebSocket(ui, state) {
 	socket.onmessage = (event) => {
 		// Check if it's a binary message (audio data)
 		if (event.data instanceof Blob) {
-			console.log('Binary audio data received (ignored in admin panel)')
+			// console.log('Binary audio data received (ignored in admin panel)')
 			// Admin panel doesn't need to process audio data
 			return
 		}
 
 		// Handle JSON messages
 		try {
-			console.log('Raw message received:', event.data)
+			// console.log('Raw message received:', event.data)
 			const data = JSON.parse(event.data)
 
 			// Special logging for playback state and sync messages
-			if (
-				data.type === 'playbackState' ||
-				data.type === 'sync' ||
-				data.type === 'initial'
-			) {
-				console.log(`${data.type} message details:`, {
-					trackId: data.trackId,
-					trackName: data.trackName,
-					isPlaying: data.isPlaying,
-					position: data.currentPosition || data.position,
-					duration: data.trackDuration || data.duration,
-				})
-			}
+			// if (
+			// 	data.type === 'playbackState' ||
+			// 	data.type === 'sync' ||
+			// 	data.type === 'initial'
+			// ) {
+			// 	console.log(`${data.type} message details:`, {
+			// 		trackId: data.trackId,
+			// 		trackName: data.trackName,
+			// 		isPlaying: data.isPlaying,
+			// 		position: data.currentPosition || data.position,
+			// 		duration: data.trackDuration || data.duration,
+			// 	})
+			// }
 
 			// Dispatch to message handler (imported in main.js)
 			window.dispatchEvent(new CustomEvent('ws-message', { detail: data }))
 		} catch (e) {
-			console.error('Parse error:', e)
+			// console.error('Parse error:', e)
 			ui.showNotification('Error parsing server message')
 		}
 	}
@@ -116,7 +116,7 @@ export function requestTrackList() {
 			}
 		})
 		.catch((err) => {
-			console.error('Error fetching tracks via API:', err)
+			// console.error('Error fetching tracks via API:', err)
 		})
 }
 

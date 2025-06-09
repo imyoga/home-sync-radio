@@ -49,7 +49,7 @@ function initAdminPanel() {
 			// Check if we need a sync due to long time without server updates
 			const now = Date.now() / 1000
 			if (state.isPlaying && now - state.lastServerSync > 30) {
-				console.log('Forcing progress request due to long time without sync')
+				// console.log('Forcing progress request due to long time without sync')
 				requestPlaybackState()
 			}
 		}
@@ -75,7 +75,7 @@ function verifyUIState(ui, state) {
 		nowPlayingElement.textContent === 'None' &&
 		state.currentTrackId
 	) {
-		console.log('Fixing inconsistent Now Playing display')
+		// console.log('Fixing inconsistent Now Playing display')
 
 		// Find track info
 		const track = state.trackList.find((t) => t.id === state.currentTrackId)

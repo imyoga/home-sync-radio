@@ -139,7 +139,7 @@ function selectTrack(trackId, state, ui, ws) {
 			}
 		})
 		.catch((err) => {
-			console.error('Error selecting track via API:', err)
+			// console.error('Error selecting track via API:', err)
 			ui.showNotification('Error selecting track')
 		})
 }
