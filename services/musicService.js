@@ -1,11 +1,7 @@
 const fs = require('fs')
 const path = require('path')
-const mp3Duration = require('mp3-duration')
-const util = require('util')
+const { parseFile } = require('music-metadata')
 const { MUSIC_DIR, SUPPORTED_AUDIO_FORMATS, DEFAULT_BITRATE } = require('../config/constants')
-
-// Promisify mp3Duration for async/await usage
-const getMP3Duration = util.promisify(mp3Duration)
 
 class MusicService {
 	constructor() {
@@ -29,27 +25,47 @@ class MusicService {
 				const stat = fs.statSync(filePath)
 
 				try {
-					// Get actual MP3 duration if it's an MP3 file
+					// Use music-metadata to get accurate duration for all supported formats
+					const metadata = await parseFile(filePath)
 					let durationMs = 0
-					if (file.toLowerCase().endsWith('.mp3')) {
-						const durationSeconds = await getMP3Duration(filePath)
-						durationMs = durationSeconds * 1000
+					
+					if (metadata.format && metadata.format.duration) {
+						// Use actual duration from metadata
+						durationMs = metadata.format.duration * 1000
 					} else {
-						// Fallback estimation for non-MP3 files
+						// Fallback to file size estimation
+						console.warn(`Unable to detect duration for ${file}, using estimation`)
 						durationMs = (stat.size * 8) / (DEFAULT_BITRATE / 1000)
 					}
 
-					this.musicFiles.push({
+					// Extract additional metadata
+					const trackInfo = {
 						id: index,
 						filename: file,
 						name: file.replace(/\.[^/.]+$/, ''), // Remove extension for display
 						path: filePath,
 						size: stat.size,
 						estimatedDurationMs: durationMs,
-					})
+						// Additional metadata from music-metadata
+						title: metadata.common?.title || file.replace(/\.[^/.]+$/, ''),
+						artist: metadata.common?.artist || 'Unknown Artist',
+						album: metadata.common?.album || 'Unknown Album',
+						genre: metadata.common?.genre ? metadata.common.genre.join(', ') : 'Unknown',
+						year: metadata.common?.year || null,
+						bitrate: metadata.format?.bitrate || DEFAULT_BITRATE / 1000,
+						sampleRate: metadata.format?.sampleRate || 44100,
+						numberOfChannels: metadata.format?.numberOfChannels || 2,
+						codecProfile: metadata.format?.codecProfile || 'Unknown',
+						container: metadata.format?.container || 'Unknown',
+						codec: metadata.format?.codec || 'Unknown'
+					}
+
+					this.musicFiles.push(trackInfo)
+
+					console.log(`✅ Loaded: ${trackInfo.title} by ${trackInfo.artist} (${Math.round(durationMs / 1000)}s, ${trackInfo.codec})`)
 				} catch (metadataError) {
-					console.error(`Error reading duration for ${file}:`, metadataError)
-					// Fallback to estimation if duration parsing fails
+					console.error(`Error reading metadata for ${file}:`, metadataError.message)
+					// Fallback to basic file info if metadata parsing fails
 					this.musicFiles.push({
 						id: index,
 						filename: file,
@@ -57,14 +73,35 @@ class MusicService {
 						path: filePath,
 						size: stat.size,
 						estimatedDurationMs: (stat.size * 8) / (DEFAULT_BITRATE / 1000), // Fallback estimation
+						title: file.replace(/\.[^/.]+$/, ''),
+						artist: 'Unknown Artist',
+						album: 'Unknown Album',
+						genre: 'Unknown',
+						year: null,
+						bitrate: DEFAULT_BITRATE / 1000,
+						sampleRate: 44100,
+						numberOfChannels: 2,
+						codecProfile: 'Unknown',
+						container: 'Unknown',
+						codec: 'Unknown'
 					})
 				}
 			}
 
 			if (this.musicFiles.length > 0) {
-				console.log(`🎵 Loaded ${this.musicFiles.length} music files`)
+				console.log(`🎵 Successfully loaded ${this.musicFiles.length} music files`)
+				
+				// Log format statistics
+				const formatStats = this.musicFiles.reduce((stats, track) => {
+					const ext = path.extname(track.filename).toLowerCase()
+					stats[ext] = (stats[ext] || 0) + 1
+					return stats
+				}, {})
+				
+				console.log('📊 Format distribution:', formatStats)
 			} else {
-				console.log('❌ No music files found in music directory')
+				console.log('❌ No valid music files found in music directory')
+				console.log(`📁 Supported formats: ${SUPPORTED_AUDIO_FORMATS.join(', ')}`)
 			}
 
 			return this.musicFiles
@@ -86,9 +123,9 @@ class MusicService {
 
 			this.audioBuffer = data
 			console.log(
-				`🎵 Preloaded: ${track.name} (${Math.round(
+				`🎵 Preloaded: ${track.title} by ${track.artist} (${Math.round(
 					this.audioBuffer.length / 1024
-				)} KB)`
+				)} KB, ${track.codec})`
 			)
 		})
 	}
@@ -107,6 +144,53 @@ class MusicService {
 
 	getTrackCount() {
 		return this.musicFiles.length
+	}
+
+	// New method to get detailed track metadata
+	getTrackMetadata(id) {
+		const track = this.musicFiles[id]
+		if (!track) return null
+		
+		return {
+			id: track.id,
+			title: track.title,
+			artist: track.artist,
+			album: track.album,
+			genre: track.genre,
+			year: track.year,
+			duration: Math.round(track.estimatedDurationMs / 1000),
+			bitrate: track.bitrate,
+			sampleRate: track.sampleRate,
+			channels: track.numberOfChannels,
+			codec: track.codec,
+			container: track.container,
+			fileSize: track.size,
+			filename: track.filename
+		}
+	}
+
+	// Method to get format statistics
+	getFormatStatistics() {
+		return this.musicFiles.reduce((stats, track) => {
+			const ext = path.extname(track.filename).toLowerCase()
+			const codec = track.codec
+			
+			if (!stats[ext]) {
+				stats[ext] = {
+					count: 0,
+					codecs: new Set(),
+					totalSize: 0,
+					totalDuration: 0
+				}
+			}
+			
+			stats[ext].count++
+			stats[ext].codecs.add(codec)
+			stats[ext].totalSize += track.size
+			stats[ext].totalDuration += track.estimatedDurationMs
+			
+			return stats
+		}, {})
 	}
 }
 

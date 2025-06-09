@@ -79,7 +79,12 @@ server.listen(PORT, async () => {
 			console.log(`⏸️ Radio is PAUSED. Use admin panel to start playback.`)
 		}
 	} else {
-		console.log('\n⚠️  No music files found. Please add MP3 or OGG files to the "music" directory.')
+		console.log('\n⚠️  No music files found.')
+		console.log('📁 Supported audio formats:')
+		console.log('   Lossy: MP3, AAC, M4A, OGG, OGA, OPUS, WEBM')
+		console.log('   Lossless: FLAC, WAV, WAVE, AIFF, AIF, ALAC')
+		console.log('   Other: WMA, AMR, 3GA, MP4, M4P, APE, MKA, AU, etc.')
+		console.log('🎵 Add any supported audio files to the "music" directory.')
 	}
 
 	console.log(`\n🔄 Starting sync broadcast service...`)
